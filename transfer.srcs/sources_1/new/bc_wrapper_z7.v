@@ -106,7 +106,7 @@ assign prf_mode = app_param0_r[1][1];
 assign prf = prf_mode ? prf_pin_in : prf_rf_in;
 
 
-assign tx_sel = 8'hf;
+assign tx_sel = 8'hff;
 
 genvar kk;
 generate
