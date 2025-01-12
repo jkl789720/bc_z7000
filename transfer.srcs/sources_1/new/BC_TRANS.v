@@ -12,7 +12,7 @@ module BC_TRANS(
     
     output 				BC_RXD
     );
-
+//this is the differ which is modified by the origin
     //--------------变量定义---------------//
     //计数器
     reg [7:0] cnt = 0;
