@@ -12,7 +12,7 @@ module BC_TRANS(
     
     output 				BC_RXD
     );
-
+//this is a differ in 30345's local
     //--------------变量定义---------------//
     //计数器
     reg [7:0] cnt = 0;
