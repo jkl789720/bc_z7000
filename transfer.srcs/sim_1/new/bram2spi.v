@@ -8,11 +8,12 @@ module bram2spi#
     input           sys_clk     , 
     input           sys_rst     , 
 
-    input           ram_clk     ,
-    input           ram_en      ,
-    input           ram_wren    ,
-    input [7:0]     ram_addr    ,
-    input [15:0]    ram_din     ,
+    input           rama_clk     ,
+    input           rama_en      ,
+    input  [3:0]    rama_wren    ,
+    input  [31:0]   rama_addr    ,
+    input  [31:0]   rama_din     ,
+    output [31:0]   rama_dout    ,
 
     input  [31:0] 	app_param0	 ,
     input  [31:0] 	app_param1	 ,
@@ -23,17 +24,24 @@ module bram2spi#
     output          mosi        
 );
 
-wire valid;
+localparam DELAY_VAULE = 10;
+localparam CTRL_REG_OFFSET = 244;
+localparam CTRL_REG_MAX = 244 + 5;
 
-assign valid = app_param1[1];
+wire        valid;
+wire [31:0] bean_pos_num;
+
+reg [31:0] 	app_param1_r [1:0];
+reg [31:0] 	app_param2_r [1:0];
 
 wire   [FRAM_BIT_NUM-1:0]   data_in     ;
+reg    [7:0]                data_addr   ;
 reg                         trig_in     ;
 wire                        send_done   ;
 
-wire                        ram_rd_en   ;
-reg    [7:0]                ram_rd_addr ;
-wire    [15:0]              ram_dout    ;
+wire                        ramb_rd_en   ;
+reg    [9:0]                ramb_rd_addr ;
+wire    [15:0]              ramb_dout    ;
 
 reg                         init_done   ;
 reg                         valid_r;
@@ -43,6 +51,28 @@ reg [7:0] cnt_delay;
 
 reg rd_en_dis;
 
+reg [9:0] cnt_send_done;
+
+//寄存器打拍寄存
+always@(posedge sys_clk)begin
+    if(sys_rst)begin
+        app_param1_r[0] <= 0;
+        app_param1_r[1] <= 0;
+        app_param2_r[0] <= 0;
+        app_param2_r[1] <= 0;
+    end
+    else begin
+        app_param1_r[0] <= app_param1;
+        app_param1_r[1] <= app_param1_r[0];
+        app_param2_r[0] <= app_param2;
+        app_param2_r[1] <= app_param2_r[0];
+    end
+end
+
+assign valid = app_param1_r[1][0];
+assign bean_pos_num = app_param2_r[1];
+
+//有效信号上升沿生成
 always @(posedge sys_clk) begin
     if(sys_rst)
         valid_r <= 0;
@@ -51,71 +81,69 @@ always @(posedge sys_clk) begin
 end
 assign valid_pos = ~valid_r && valid;
 
-//bram数据写入完成
-always @(posedge sys_clk) begin
-    if(sys_rst)
-        init_done <= 0;
-    else if(valid_pos)
-        init_done <= 1;
-end
-
 
 //延迟计数器生成
 always@(posedge sys_clk)begin
     if(sys_rst)
-        cnt_delay <= 100;
+        cnt_delay <= DELAY_VAULE;
     else if(send_done)
         cnt_delay <= 0;
-    else if(cnt_delay == 100)
-        cnt_delay <= 100;
+    else if(cnt_delay == DELAY_VAULE)
+        cnt_delay <= DELAY_VAULE;
     else
         cnt_delay <= cnt_delay + 1;
 end
 
+
+
 //ram都使能生成
-assign ram_rd_en = valid_pos | (cnt_delay == 99 && ram_rd_addr < 256) && (!rd_en_dis);//256次数据读取
+assign ramb_rd_en = valid_pos | (cnt_delay == DELAY_VAULE - 1 && (ramb_rd_addr >= 1 && ramb_rd_addr <= CTRL_REG_MAX));
 
 
 //计数到255之后保持在256
 always@(posedge sys_clk)begin
-    if(sys_rst)begin
-        ram_rd_addr <= 0;
-        rd_en_dis   <= 0;
-    end
-        
-    else if(ram_rd_en)begin
-        if(ram_rd_addr == 255)begin
-            ram_rd_addr <= 0;
-            rd_en_dis   <= 1;
-        end
-            
+    if(sys_rst)
+        ramb_rd_addr <= 0;
+    else if(ramb_rd_en)begin
+        if(ramb_rd_addr == (bean_pos_num << 1) - 1)
+            ramb_rd_addr <= CTRL_REG_OFFSET;
+        else if(ramb_rd_addr == CTRL_REG_MAX)//note that there no need to minus 1
+            ramb_rd_addr <= 0;
         else
-            ram_rd_addr <= ram_rd_addr + 1;
+            ramb_rd_addr <= ramb_rd_addr + 1;
     end
 end
 
+//读地址打拍作为spi的地址
+always@(posedge sys_clk)begin
+    if(sys_rst)
+        data_addr <= 0;
+    else 
+        data_addr <= ramb_rd_addr;
+end
+
 //数据发送控制
-assign data_in = {ram_rd_addr-1'b1,ram_dout};
+assign data_in = {data_addr,ramb_dout};
 always @(posedge sys_clk) begin
     if(sys_rst)
         trig_in <= 0;
     else
-        trig_in <= ram_rd_en;
+        trig_in <= ramb_rd_en;
 end
 
 bram_out u_bram_out (
-  .clka (ram_clk    ),      // input wire clka
-  .ena  (ram_en     ),      // input wire ena
-  .wea  (ram_wren   ),      // input wire [0 : 0] wea
-  .addra(ram_addr   ),      // input wire [7 : 0] addra
-  .dina (ram_din    ),      // input wire [15 : 0] dina
-  .douta(           ),      // output wire [15 : 0] douta
+  .clka (rama_clk    ),      // input wire clka
+  .ena  (rama_en     ),      // input wire ena
+  .wea  (rama_wren[0]),      // input wire [3 : 0] wea
+  .addra(rama_addr >> 2),      // input wire [31] : 0] addra
+  .dina (rama_din    ),      // input wire [31 : 0] dina
+  .douta(rama_dout   ),      // output wire [31 : 0] douta
   .clkb (sys_clk    ),      // input wire clkb
-  .enb  (ram_rd_en  ),      // input wire enb
+  .enb  (ramb_rd_en  ),      // input wire enb
   .web  (0          ),      // input wire [0 : 0] web
-  .addrb(ram_rd_addr),      // input wire [7 : 0] addrb
+  .addrb(ramb_rd_addr),      // input wire [7 : 0] addrb
   .dinb (0          ),      // input wire [15 : 0] dinb
-  .doutb(ram_dout   )       // output wire [15 : 0] doutb
+  .doutb(ramb_dout   )       // output wire [15 : 0] doutb
 );
 
 
