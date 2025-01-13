@@ -58,6 +58,8 @@ module bc_wrapper#(
     output                            trr_o_h        ,
     output                            rst_o_h        ,
 
+    output [23:0]                     beam_pos_cnt   ,
+
 
 	input                	          rama_clk       ,
 	input                             rama_en        ,
@@ -328,7 +330,8 @@ u_send_data_gen(
 .  temper_en            (temper_en              ) ,
 .  temper_read_done     (temper_read_done       ) ,
 .  temper_req           (temper_req             ) ,
-.  reset                (reset                  ) 
+.  reset                (reset                  ) ,
+.  beam_pos_cnt         (beam_pos_cnt           ) 
 );
 
 

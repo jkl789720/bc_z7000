@@ -57,7 +57,8 @@ output reg                  dary_o                      ,
 output reg                  temper_en                   ,
 input                       temper_read_done            ,
 input                       temper_req                  ,
-output                      reset
+output                      reset                       ,
+output reg [23:0]           beam_pos_cnt                       
 );
 
 
@@ -132,7 +133,7 @@ reg  [$clog2(GROUP_CHIP_NUM*GROUP_NUM)-1:0]     rd_cnt_r0         ;
 wire [127:0]                          rd_data           ;
 
 // reg  [23:0]                     beam_pos_cnt_temp ;
-reg [23:0]                            beam_pos_cnt      ;
+// reg [23:0]                            beam_pos_cnt      ;
 
 wire [31:0]                           rd_addr           ;
 

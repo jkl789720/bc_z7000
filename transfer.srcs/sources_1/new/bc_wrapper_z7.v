@@ -40,7 +40,7 @@ module bc_wrapper_z7#(
 	output  [31 : 0]                rama_dout       ,
 	input                           rama_rst        ,
 
-
+//ram_port
     input                           bram_tx_sel_clk ,
     input                           bram_tx_sel_en  ,
     input  [3:0]                    bram_tx_sel_we  ,
@@ -55,7 +55,11 @@ module bc_wrapper_z7#(
     input   [31:0] 			        app_param2	    ,
     input   [31:0] 			        app_param3	    ,
     output  [31:0] 			        app_status0	    ,
-    output  [31:0] 			        app_status1	    ,   
+    output  [31:0] 			        app_status1	    ,  
+    
+    
+
+
 
  
 //BC1_new
@@ -79,6 +83,13 @@ module bc_wrapper_z7#(
 
 );
 
+
+//ram_read_port
+
+wire                bram_tx_sel_en_read   ;   
+wire [3 : 0]        bram_tx_sel_addr_read ;  
+wire [31 : 0]       bram_tx_sel_dout_read ;  
+
 wire                        sel_o_h     ;
 wire                        scl_o_h     ;
 wire [GROUP_CHIP_NUM-1:0]   sd_o_h      ;
@@ -97,16 +108,13 @@ wire [7:0] tx_sel;//选择对应bit作为发射通道，为1作为发射，发�
 wire [7:0] trt;
 wire [7:0] trr;
 
-
-
-
-
+wire [23:0] beam_pos_cnt;
 
 assign prf_mode = app_param0_r[1][1];
 assign prf = prf_mode ? prf_pin_in : prf_rf_in;
 
 
-assign tx_sel = 8'hff;
+assign tx_sel = bram_tx_sel_dout_read[7:0];
 
 genvar kk;
 generate
@@ -146,10 +154,6 @@ always @(posedge  sys_clk) begin
     end
 end
 
-
-
-
-    
 
     
 bc_wrapper#(
@@ -201,6 +205,7 @@ u_bc_wrapper(
     .    trt_o_h        ( trt_o_h       )       ,
     .    trr_o_h        ( trr_o_h       )       ,
     .    rst_o_h        ( rst_o_h       )       ,
+    .    beam_pos_cnt   ( beam_pos_cnt  )       ,
 
 	.    rama_clk       ( rama_clk      )       ,
 	.    rama_en        ( rama_en       )       ,
@@ -217,5 +222,22 @@ u_bc_wrapper(
     .    app_status1    ( app_status1   )	 
 
 ); 
-    
+
+
+
+bram_tx_sel u_bram_tx_sel (
+  .clka (bram_tx_sel_clk        ),      // input wire clka
+  .ena  (bram_tx_sel_en         ),      // input wire ena
+  .wea  (bram_tx_sel_we[0]      ),      // input wire [0 : 0] wea
+  .addra(bram_tx_sel_addr >> 2  ),      // input wire [2 : 0] addra
+  .dina (bram_tx_sel_din        ),      // input wire [31 : 0] dina
+  .douta(bram_tx_sel_dout       ),      // output wire [31 : 0] douta
+  .clkb (sys_clk                ),      // input wire clkb
+  .enb  (1                      ),      // input wire enb
+  .web  (0                      ),      // input wire [0 : 0] web
+  .addrb(beam_pos_cnt -1        ),      // input wire [3 : 0] addrb
+  .dinb (0                      ),      // input wire [15 : 0] dinb
+  .doutb(bram_tx_sel_dout_read  )       // output wire [15 : 0] doutb
+);
+
 endmodule
