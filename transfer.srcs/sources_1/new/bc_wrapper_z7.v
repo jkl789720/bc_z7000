@@ -46,7 +46,7 @@ module bc_wrapper_z7#(
     input  [3:0]                    bram_tx_sel_we  ,
     input  [31:0]                   bram_tx_sel_addr,
     input  [31:0]                   bram_tx_sel_din ,
-    input  [31:0]                   bram_tx_sel_dout,
+    output [31:0]                   bram_tx_sel_dout,
     output                          bram_tx_sel_rst ,
 
 

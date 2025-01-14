@@ -21,12 +21,13 @@ module bram2spi#
 
     output          cs_n        ,
     output          scl         ,
-    output          mosi        
+    output          mosi        ,
+    output          bc_data_done        
 );
 
 localparam DELAY_VAULE = 10;
 localparam CTRL_REG_OFFSET = 244;
-localparam CTRL_REG_MAX = 244 + 5;
+localparam CTRL_REG_MAX = 244 + 3;
 
 wire        valid;
 wire [31:0] bean_pos_num;
@@ -43,7 +44,7 @@ wire                        ramb_rd_en   ;
 reg    [9:0]                ramb_rd_addr ;
 wire    [15:0]              ramb_dout    ;
 
-reg                         init_done   ;
+
 reg                         valid_r;
 wire valid_pos;
 
@@ -130,6 +131,8 @@ always @(posedge sys_clk) begin
     else
         trig_in <= ramb_rd_en;
 end
+
+assign bc_data_done = send_done && ramb_rd_addr == 0;
 
 bram_out u_bram_out (
   .clka (rama_clk    ),      // input wire clka

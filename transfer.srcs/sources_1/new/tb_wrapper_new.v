@@ -26,7 +26,7 @@ module tb_wrapper_new#(
 ();
 
 localparam LANE_NUM = 64*2;
-localparam BEAM_POS_NUM =  GROUP_CHIP_NUM;
+localparam BEAM_POS_NUM =  16;
 localparam TOTAL_LANE_NUM = LANE_NUM * BEAM_POS_NUM;
 
 
@@ -62,6 +62,37 @@ wire  [3:0]                   BC2_TRR      ;
 wire                          BC_RST       ;
 
 
+//tx_sel_en
+
+reg  [3:0]      bram_tx_sel_we  ;
+reg  [31:0]     bram_tx_sel_addr;
+wire [31:0]     bram_tx_sel_din ;
+wire [31:0]     bram_tx_sel_dout;
+wire            bram_tx_sel_rst ;
+
+
+
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        bram_tx_sel_we <= 0;
+    else if(bram_tx_sel_addr == 4 * (BEAM_POS_NUM/2) - 4)
+        bram_tx_sel_we <= 4'hf;
+    else
+        bram_tx_sel_we <= 0;
+end
+
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        bram_tx_sel_addr <= 0;
+    else if(bram_tx_sel_we == 4'hf)begin
+        if(bram_tx_sel_addr == 4 * (BEAM_POS_NUM/2) - 4)
+            bram_tx_sel_addr <= 0;
+        else
+            bram_tx_sel_addr <= bram_tx_sel_addr + 4;
+    end
+end
+
+assign bram_tx_sel_din = {16'd0,8'b1111_0000,8'b0000_1111};
 
 
 
@@ -88,6 +119,8 @@ wire                      rama_rst        ;
 wire [31:0] 			  app_param0      ;
 wire [31:0] 			  app_param1      ;
 wire [31:0] 			  app_param2      ;
+
+
 
 assign  rama_rst  = 0         ;
 assign  rama_en   = 1         ;
@@ -280,35 +313,44 @@ bc_wrapper_z7#(
     . BEAM_NUM         (BEAM_NUM        )
 )
 u_bc_wrapper_z7(
-    . sys_clk 	    (sys_clk 	    )       ,
-    . sys_rst 	    (sys_rst 	    )       ,
-    . prf_pin_in    (prf_pin_in     )       ,
-    . tr_en         (tr_en          )       ,
-    . rama_clk      (rama_clk       )       ,
-	. rama_en       (rama_en        )       ,
-	. rama_we       (rama_we        )       ,
-	. rama_addr     (rama_addr      )       ,
-	. rama_din      (rama_din       )       ,
-	. rama_dout     (rama_dout      )       ,
-	. rama_rst      (rama_rst       )       ,
-    . app_param0    (app_param0     )  	    ,
-    . app_param1    (app_param1     )  	    ,
-    . app_param2    (app_param2     )  	    ,
-    . app_status0   (app_status0    )	    ,
-    . app_status1   (app_status1    )	    ,
-    . BC1_SEL       (BC1_SEL        )       ,
-    . BC1_CLK       (BC1_CLK        )       ,
-    . BC1_DATA      (BC1_DATA       )       ,
-    . BC1_LD        (BC1_LD         )       ,
-    . BC1_TRR       (BC1_TRR        )       ,
-    . BC1_TRT       (BC1_TRT        )       ,
-    . BC2_SEL       (BC2_SEL        )       ,
-    . BC2_CLK       (BC2_CLK        )       ,
-    . BC2_DATA      (BC2_DATA       )       ,
-    . BC2_LD        (BC2_LD         )       ,
-    . BC2_TRT       (BC2_TRT        )       ,
-    . BC2_TRR       (BC2_TRR        )       ,
-    . BC_RST        (BC_RST         )       
+    . sys_clk 	        (sys_clk 	        )       ,
+    . sys_rst 	        (sys_rst 	        )       ,
+    . prf_pin_in        (prf_pin_in         )       ,
+    . tr_en             (tr_en              )       ,
+    . rama_clk          (rama_clk           )       ,
+	. rama_en           (rama_en            )       ,
+	. rama_we           (rama_we            )       ,
+	. rama_addr         (rama_addr          )       ,
+	. rama_din          (rama_din           )       ,
+	. rama_dout         (rama_dout          )       ,
+	. rama_rst          (rama_rst           )       ,
+
+    . bram_tx_sel_clk   (sys_clk            )  ,
+    . bram_tx_sel_en    (1                  )  ,
+    . bram_tx_sel_we    (bram_tx_sel_we     )  ,
+    . bram_tx_sel_addr  (bram_tx_sel_addr   )  ,
+    . bram_tx_sel_din   (bram_tx_sel_din    )  ,
+    . bram_tx_sel_dout  (bram_tx_sel_dout   )  ,
+    . bram_tx_sel_rst   (bram_tx_sel_rst    )  ,
+    
+    . app_param0        (app_param0         )  	    ,
+    . app_param1        (app_param1         )  	    ,
+    . app_param2        (app_param2         )  	    ,
+    . app_status0       (app_status0        )	    ,
+    . app_status1       (app_status1        )	    ,
+    . BC1_SEL           (BC1_SEL            )       ,
+    . BC1_CLK           (BC1_CLK            )       ,
+    . BC1_DATA          (BC1_DATA           )       ,
+    . BC1_LD            (BC1_LD             )       ,
+    . BC1_TRR           (BC1_TRR            )       ,
+    . BC1_TRT           (BC1_TRT            )       ,
+    . BC2_SEL           (BC2_SEL            )       ,
+    . BC2_CLK           (BC2_CLK            )       ,
+    . BC2_DATA          (BC2_DATA           )       ,
+    . BC2_LD            (BC2_LD             )       ,
+    . BC2_TRT           (BC2_TRT            )       ,
+    . BC2_TRR           (BC2_TRR            )       ,
+    . BC_RST            (BC_RST             )       
 );
 
 BC_TRANS u_BC_TRANS(
