@@ -74,10 +74,8 @@ wire            bram_tx_sel_rst ;
 
 always @(posedge sys_clk) begin
     if(sys_rst)
-        bram_tx_sel_we <= 0;
-    else if(bram_tx_sel_addr == 4 * (BEAM_POS_NUM/2) - 4)
         bram_tx_sel_we <= 4'hf;
-    else
+    else if(bram_tx_sel_addr == 4 * (BEAM_POS_NUM/2) - 4)
         bram_tx_sel_we <= 0;
 end
 
@@ -92,7 +90,7 @@ always @(posedge sys_clk) begin
     end
 end
 
-assign bram_tx_sel_din = {16'd0,8'b1111_0000,8'b0000_1111};
+assign bram_tx_sel_din = {8'd0,8'b1111_0000,8'd0,8'b0000_1111};
 
 
 

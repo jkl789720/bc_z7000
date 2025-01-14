@@ -1,5 +1,5 @@
-`define TB_TEST   //仿真
-// `define DEBUG     //在线调试
+// `define TB_TEST   //仿真
+`define DEBUG     //在线调试
 // `define SAR          //大SAR
 `define G3
 

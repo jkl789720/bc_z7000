@@ -88,7 +88,9 @@ module bc_wrapper_z7#(
 
 wire                bram_tx_sel_en_read   ;   
 wire [3 : 0]        bram_tx_sel_addr_read ;  
-wire [31 : 0]       bram_tx_sel_dout_read ;  
+wire [15 : 0]       bram_tx_sel_dout_read ;  
+
+
 
 wire                        sel_o_h     ;
 wire                        scl_o_h     ;
@@ -153,6 +155,9 @@ always @(posedge  sys_clk) begin
         app_param0_r[1] <= app_param0_r[0];
     end
 end
+
+assign bram_tx_sel_en_read = 1;
+assign bram_tx_sel_addr_read = beam_pos_cnt -1;
 
 
     
@@ -233,9 +238,9 @@ bram_tx_sel u_bram_tx_sel (
   .dina (bram_tx_sel_din        ),      // input wire [31 : 0] dina
   .douta(bram_tx_sel_dout       ),      // output wire [31 : 0] douta
   .clkb (sys_clk                ),      // input wire clkb
-  .enb  (1                      ),      // input wire enb
+  .enb  (bram_tx_sel_en_read    ),      // input wire enb
   .web  (0                      ),      // input wire [0 : 0] web
-  .addrb(beam_pos_cnt -1        ),      // input wire [3 : 0] addrb
+  .addrb(bram_tx_sel_addr_read  ),      // input wire [3 : 0] addrb
   .dinb (0                      ),      // input wire [15 : 0] dinb
   .doutb(bram_tx_sel_dout_read  )       // output wire [15 : 0] doutb
 );
