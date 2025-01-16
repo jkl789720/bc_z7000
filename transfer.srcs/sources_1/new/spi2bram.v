@@ -23,6 +23,8 @@ reg [1:0]   cs_n_r  ;
 reg [1:0]   scl_r ;
 reg [1:0]   mosi_r;
 
+wire cs_n_neg;
+
 wire        scl_pos;
 
 reg [7:0]   cnt_bit;
@@ -48,10 +50,14 @@ always @(posedge sys_clk) begin
     end
 end
 
+assign cs_n_neg = ~cs_n_r[0] && cs_n_r[1];
+
 
 //-------------------数据接收计数器生成-----------------------//
 always @(posedge sys_clk) begin
     if(sys_rst)
+        cnt_bit <= 0;
+    else if(cs_n_neg)
         cnt_bit <= 0;
     else if(add_cnt_bit)begin
         if(end_cnt_bit)

@@ -98,7 +98,7 @@ end
 
 
 //ram都使能生成
-assign ramb_rd_en = valid_pos | (cnt_delay == DELAY_VAULE - 1 && (ramb_rd_addr >= 1 && ramb_rd_addr <= CTRL_REG_MAX));
+assign ramb_rd_en = valid_pos | ((cnt_delay == DELAY_VAULE - 1) && (ramb_rd_addr >= 1 && ramb_rd_addr <= CTRL_REG_MAX));
 
 
 //计数到255之后保持在256
@@ -106,7 +106,7 @@ always@(posedge sys_clk)begin
     if(sys_rst)
         ramb_rd_addr <= 0;
     else if(ramb_rd_en)begin
-        if(ramb_rd_addr == (bean_pos_num << 1) - 1)
+        if(ramb_rd_addr == (bean_pos_num << 3) - 1)
             ramb_rd_addr <= CTRL_REG_OFFSET;
         else if(ramb_rd_addr == CTRL_REG_MAX)//note that there no need to minus 1
             ramb_rd_addr <= 0;
@@ -132,9 +132,9 @@ always @(posedge sys_clk) begin
         trig_in <= ramb_rd_en;
 end
 
-assign bc_data_done = send_done && ramb_rd_addr == 0;
+assign bc_data_done = (cnt_delay == DELAY_VAULE - 1) && ramb_rd_addr == 0;
 
-bram_out u_bram_out (
+bram_spi_out u_bram_spi_out (
   .clka (rama_clk    ),      // input wire clka
   .ena  (rama_en     ),      // input wire ena
   .wea  (rama_wren[0]),      // input wire [3 : 0] wea
@@ -165,6 +165,28 @@ u_spi_o(
     . scl        (scl      ) ,
     . mosi       (mosi     ) ,
     . send_done  (send_done)
+);
+
+
+
+
+ila_total u_ila_total (
+	.clk(sys_clk), // input wire clk
+
+
+	.probe0 (rama_en        ), //  1    input wire [0:0]   probe0  
+	.probe1 (rama_we        ), //  3    input wire [3:0]   probe1 
+	.probe2 (rama_addr      ), //  32   input wire [31:0]  probe2 
+	.probe3 (rama_din       ), //  32   input wire [31:0]  probe3 
+	.probe4 (rama_dout      ), //  32   input wire [31:0]  probe4 
+	.probe5 (cs_n           ), //  1    input wire [0:0]   probe5 
+	.probe6 (scl            ), //  1    input wire [0:0]   probe6 
+	.probe7 (mosi           ), //  1    input wire [0:0]   probe7 
+	.probe8 (bc_data_done   ), //  1    input wire [0:0]   probe8 
+	.probe9 (valid          ), //  1    input wire [0:0]   probe9 
+	.probe10(beam_pos_num   ), // 32   input wire [31:0]  probe10
+	.probe11(data_in        ), // 24   input wire [31:0]  probe10
+	.probe12(trig_in        )  // 1   input wire [31:0]  probe10
 );
 
 endmodule

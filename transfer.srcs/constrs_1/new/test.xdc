@@ -94,13 +94,13 @@ set_property PACKAGE_PIN G17 [get_ports {BC_RST     }  ]
 
 ##RFSOC
 
-set_property PACKAGE_PIN V7   [get_ports {sclk  }   ]
+set_property PACKAGE_PIN V7   [get_ports {scl   }   ]
 set_property PACKAGE_PIN Y6   [get_ports {cs_n   }   ]
 set_property PACKAGE_PIN L14  [get_ports {mosi  }   ]
 
 set_property PACKAGE_PIN L15  [get_ports {prf_rf_in }   ]
 set_property PACKAGE_PIN Y7   [get_ports {tr_en     }   ]
-set_property PACKAGE_PIN M15  [get_ports {image_start}   ]
+set_property PACKAGE_PIN M15  [get_ports {bc_data_done}   ]
 
 
 ##--------------------IOSTANDARD-------------------//
@@ -112,12 +112,12 @@ set_property IOSTANDARD LVCMOS33 [get_ports {prf_pin_in}]
 set_property IOSTANDARD LVCMOS33 [get_ports BC*]
 
 ##RFSOC
-set_property IOSTANDARD LVCMOS33 [get_ports {sclk }   ]
+set_property IOSTANDARD LVCMOS33 [get_ports {scl  }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {cs_n }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {mosi }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {prf_rf_in }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {tr_en     }   ]
-set_property IOSTANDARD LVCMOS33 [get_ports {image_start}   ]
+set_property IOSTANDARD LVCMOS33 [get_ports {bc_data_done}   ]
 
 
 

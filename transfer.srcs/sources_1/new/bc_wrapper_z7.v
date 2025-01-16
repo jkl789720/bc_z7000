@@ -30,7 +30,6 @@ module bc_wrapper_z7#(
     input                           prf_rf_in       ,
     input                           tr_en           ,
 
-    input                           image_start     ,
 
     input                	        rama_clk        ,
 	input                           rama_en         ,
@@ -102,6 +101,8 @@ wire                        trr_o_h     ;
 wire                        rst_o_h     ;
 
 reg [31:0]  app_param0_r [1:0];
+reg [31:0]  app_param2_r [1:0];
+
 
 wire prf_mode;
 wire prf;
@@ -111,6 +112,10 @@ wire [7:0] trt;
 wire [7:0] trr;
 
 wire [23:0] beam_pos_cnt;
+
+wire [31:0] beam_pos_num;
+
+assign beam_pos_num = app_param2_r[1][31:0];
 
 assign prf_mode = app_param0_r[1][1];
 assign prf = prf_mode ? prf_pin_in : prf_rf_in;
@@ -156,8 +161,20 @@ always @(posedge  sys_clk) begin
     end
 end
 
+//生成一份打拍的代码
+always @(posedge  sys_clk) begin
+    if(sys_rst)begin
+        app_param2_r[0] <= 0;
+        app_param2_r[1] <= 0;
+    end
+    else begin
+        app_param2_r[0] <= app_param2;
+        app_param2_r[1] <= app_param2_r[0];
+    end
+end
+
 assign bram_tx_sel_en_read = 1;
-assign bram_tx_sel_addr_read = beam_pos_cnt -1;
+assign bram_tx_sel_addr_read = beam_pos_num == 1 ? 0 : beam_pos_cnt -1;
 
 
     
@@ -245,4 +262,22 @@ bram_tx_sel u_bram_tx_sel (
   .doutb(bram_tx_sel_dout_read  )       // output wire [15 : 0] doutb
 );
 
+
+ila_tx_en u_ila_tx_en (
+	.clk                     (sys_clk   ), // input wire clk
+
+
+	.probe0                  (tx_sel               ), //8
+	.probe1                  (trt                  ), //8
+	.probe2                  (trr                  ), //8
+	.probe3                  (bram_tx_sel_addr_read), //4
+	.probe4                  (trt_o_h              ), //1
+	.probe5                  (trr_o_h              ),  //1
+	.probe6                  (bram_tx_sel_clk      ),  //1
+	.probe7                  (bram_tx_sel_en       ),  //1
+	.probe8                  (bram_tx_sel_we       ),  //4
+	.probe9                  (bram_tx_sel_addr     ),  //32
+	.probe10                 (bram_tx_sel_din      ),  //32
+	.probe11                 (bram_tx_sel_dout     )   //32
+);
 endmodule

@@ -36,9 +36,9 @@ preplace inst axilite_slave_0 -pg 1 -lvl 5 -x 1380 -y 650 -defaultsOSRD
 preplace inst axi_bram_ctrl_bc_angle -pg 1 -lvl 4 -x 1040 -y 350 -defaultsOSRD
 preplace inst system_ila_0 -pg 1 -lvl 3 -x 790 -y 440 -defaultsOSRD
 preplace inst axi_bram_ctrl_tx_sel -pg 1 -lvl 4 -x 1040 -y 80 -defaultsOSRD
-preplace netloc processing_system7_0_FCLK_CLK0 1 0 5 -90 0 340 40 680 80 890 270 1220
-preplace netloc processing_system7_0_FCLK_RESET0_N 1 0 2 -80 220 330
-preplace netloc rst_ps7_0_50M_peripheral_aresetn 1 1 4 350 440 660 360 900 260 1200
+preplace netloc processing_system7_0_FCLK_CLK0 1 0 5 -90 0 320 40 670 80 880 270 1210
+preplace netloc processing_system7_0_FCLK_RESET0_N 1 0 2 -80 220 310
+preplace netloc rst_ps7_0_50M_peripheral_aresetn 1 1 4 330 440 650 360 890 260 1190
 preplace netloc axilite_slave_0_app_param0 1 5 1 NJ 580
 preplace netloc axilite_slave_0_app_param1 1 5 1 NJ 600
 preplace netloc axilite_slave_0_app_param2 1 5 1 NJ 620
@@ -55,20 +55,20 @@ preplace netloc app_status4_0_1 1 0 5 NJ 650 NJ 650 NJ 650 N 650 N
 preplace netloc app_status5_0_1 1 0 5 NJ 670 NJ 670 NJ 670 N 670 N
 preplace netloc app_status6_0_1 1 0 5 NJ 690 NJ 690 NJ 690 N 690 N
 preplace netloc app_status7_0_1 1 0 5 NJ 710 NJ 710 NJ 710 N 710 N
-preplace netloc processing_system7_0_DDR 1 1 5 320J 20 NJ 20 890 -10 1220 60 NJ
-preplace netloc processing_system7_0_FIXED_IO 1 1 5 330J 30 NJ 30 900 0 1180 70 1540J
-preplace netloc axi_uartlite_0_UART 1 5 1 NJ 420
-preplace netloc ps7_0_axi_periph_M01_AXI 1 2 3 670 230 N 230 1190
-preplace netloc ps7_0_axi_periph_M00_AXI 1 2 3 690 220 N 220 N
-preplace netloc processing_system7_0_M_AXI_GP0 1 1 1 320 100n
-preplace netloc ps7_0_axi_periph_M02_AXI 1 2 3 N 240 N 240 1180
-preplace netloc axi_bram_ctrl_0_BRAM_PORTA 1 5 1 NJ 170
-preplace netloc ps7_0_axi_periph_M03_AXI 1 2 2 650 330 N
-preplace netloc axi_bram_ctrl_bc_angle_BRAM_PORTA 1 4 2 1210J 110 1540J
-preplace netloc ps7_0_axi_periph_M04_AXI 1 2 2 660 60 NJ
+preplace netloc ps7_0_axi_periph_M04_AXI 1 2 2 650 60 NJ
 preplace netloc axi_bram_ctrl_tx_sel_BRAM_PORTA 1 4 2 NJ 80 NJ
+preplace netloc axi_uartlite_0_UART 1 5 1 NJ 420
+preplace netloc axi_bram_ctrl_bc_angle_BRAM_PORTA 1 4 2 1200J 110 1530J
+preplace netloc processing_system7_0_DDR 1 1 5 300J 20 NJ 20 880 -10 1210 60 NJ
+preplace netloc ps7_0_axi_periph_M01_AXI 1 2 3 660 230 N 230 1180
+preplace netloc processing_system7_0_FIXED_IO 1 1 5 310J 30 NJ 30 890 0 1170 70 1530J
+preplace netloc processing_system7_0_M_AXI_GP0 1 1 1 300 100n
+preplace netloc ps7_0_axi_periph_M03_AXI 1 2 2 640 330 N
+preplace netloc ps7_0_axi_periph_M02_AXI 1 2 3 N 240 N 240 1170
+preplace netloc ps7_0_axi_periph_M00_AXI 1 2 3 680 220 N 220 N
+preplace netloc axi_bram_ctrl_0_BRAM_PORTA 1 5 1 1540J 170n
 levelinfo -pg 1 -110 120 500 790 1040 1380 1570
-pagesize -pg 1 -db -bbox -sgen -280 -110 1740 820
+pagesize -pg 1 -db -bbox -sgen -290 -110 1740 820
 "
 }
 {
