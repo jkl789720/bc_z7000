@@ -90,7 +90,10 @@ always @(posedge sys_clk) begin
     end
 end
 
-assign bram_tx_sel_din = {8'd0,8'b1111_0000,8'd0,8'b0000_1111};
+wire [15:0] data_low,data_high;
+assign data_low  = bram_tx_sel_addr >> 1;
+assign data_high  = 1'b1+(bram_tx_sel_addr >> 1);
+assign bram_tx_sel_din = {data_high,data_low};
 
 
 

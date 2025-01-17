@@ -101,11 +101,19 @@ wire                        trr_o_h     ;
 wire                        rst_o_h     ;
 
 reg [31:0]  app_param0_r [1:0];
+reg [31:0]  app_param1_r [1:0];
 reg [31:0]  app_param2_r [1:0];
 
 
 wire prf_mode;
 wire prf;
+reg [1:0] prf_r;
+wire prf_pos;
+reg [7:0] cnt_prf;
+
+wire valid;
+reg [1:0] valid_r;
+wire valid_pos;
 
 wire [7:0] tx_sel;//选择对应bit作为发射通道，为1作为发射，发射使能来了就发射，否则作为接收
 wire [7:0] trt;
@@ -164,6 +172,18 @@ end
 //生成一份打拍的代码
 always @(posedge  sys_clk) begin
     if(sys_rst)begin
+        app_param1_r[0] <= 0;
+        app_param1_r[1] <= 0;
+    end
+    else begin
+        app_param1_r[0] <= app_param1;
+        app_param1_r[1] <= app_param1_r[0];
+    end
+end
+
+//生成一份打拍的代码
+always @(posedge  sys_clk) begin
+    if(sys_rst)begin
         app_param2_r[0] <= 0;
         app_param2_r[1] <= 0;
     end
@@ -173,8 +193,49 @@ always @(posedge  sys_clk) begin
     end
 end
 
+assign valid = app_param1_r[1][0];
+
+always @(posedge sys_clk) begin
+    if(sys_rst)begin
+        valid_r <= 0;
+    end
+    else begin
+        valid_r <= {valid_r[0],valid};
+    end
+end
+
+assign valid_pos = ~valid_r[1] && valid_r[0];
+
+//prf信号打拍
+always @(posedge sys_clk) begin
+    if(sys_rst)begin
+        prf_r <= 0;
+    end
+    else begin
+        prf_r <= {prf_r[0],prf};
+    end
+end
+
+assign prf_pos = ~prf_r[1] && prf_r[0];
+
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        cnt_prf <= 0;
+    else if(valid_pos)
+        cnt_prf <= 0;
+    else if(prf_pos)begin
+        if(cnt_prf == 16)
+            cnt_prf <= 1;
+        else
+            cnt_prf <= cnt_prf + 1;
+    end
+        
+end
+
+
+
 assign bram_tx_sel_en_read = 1;
-assign bram_tx_sel_addr_read = beam_pos_num == 1 ? 0 : beam_pos_cnt -1;
+assign bram_tx_sel_addr_read = beam_pos_num == 1 ? 0 : cnt_prf -1;
 
 
     

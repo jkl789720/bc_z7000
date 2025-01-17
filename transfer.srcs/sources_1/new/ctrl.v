@@ -247,24 +247,24 @@ bram_spi_in u_bram_spi_in (
   .doutb(doutb                  )       // output wire [15 : 0] doutb
 );
 
-ila_total u_ila_total (
-	.clk    (sys_clk            ), // input wire clk
-	.probe0 (ram_bc_angle_clk   ), // 1 
-	.probe1 (ram_bc_angle_en    ), // 1 
-	.probe2 (ram_bc_angle_we    ), // 4 
-	.probe3 (ram_bc_angle_addr  ), // 32
-	.probe4 (ram_bc_angle_din   ), // 32
-	.probe5 (ram_bc_angle_dout  ), // 32
-	.probe6 (cs_n               ), // 1 
-	.probe7 (scl                ), // 1 
-	.probe8 (mosi               ), // 1 
-	.probe9 (bc_data_done       ), // 1 
-	.probe10(ram_rfsoc_clk      ), // 1 
-	.probe11(ram_rfsoc_en       ), // 1 
-	.probe12(ram_rfsoc_wren     ), // 1 
-	.probe13(ram_rfsoc_addr     ), // 8 
-	.probe14(ram_rfsoc_din      )  // 16
-);
+// ila_total u_ila_total (
+// 	.clk    (sys_clk            ), // input wire clk
+// 	.probe0 (ram_bc_angle_clk   ), // 1 
+// 	.probe1 (ram_bc_angle_en    ), // 1 
+// 	.probe2 (ram_bc_angle_we    ), // 4 
+// 	.probe3 (ram_bc_angle_addr  ), // 32
+// 	.probe4 (ram_bc_angle_din   ), // 32
+// 	.probe5 (ram_bc_angle_dout  ), // 32
+// 	.probe6 (cs_n               ), // 1 
+// 	.probe7 (scl                ), // 1 
+// 	.probe8 (mosi               ), // 1 
+// 	.probe9 (bc_data_done       ), // 1 
+// 	.probe10(ram_rfsoc_clk      ), // 1 
+// 	.probe11(ram_rfsoc_en       ), // 1 
+// 	.probe12(ram_rfsoc_wren     ), // 1 
+// 	.probe13(ram_rfsoc_addr     ), // 8 
+// 	.probe14(ram_rfsoc_din      )  // 16
+// );
 
 
 
