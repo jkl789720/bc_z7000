@@ -224,7 +224,7 @@ always @(posedge sys_clk) begin
     else if(valid_pos)
         cnt_prf <= 0;
     else if(prf_pos)begin
-        if(cnt_prf == 16)
+        if(cnt_prf == beam_pos_num)
             cnt_prf <= 1;
         else
             cnt_prf <= cnt_prf + 1;

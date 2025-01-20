@@ -26,7 +26,7 @@ module tb_wrapper_new#(
 ();
 
 localparam LANE_NUM = 64*2;
-localparam BEAM_POS_NUM =  16;
+localparam BEAM_POS_NUM =  4;
 localparam TOTAL_LANE_NUM = LANE_NUM * BEAM_POS_NUM;
 
 
