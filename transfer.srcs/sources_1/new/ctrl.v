@@ -247,6 +247,12 @@ bram_spi_in u_bram_spi_in (
   .doutb(doutb                  )       // output wire [15 : 0] doutb
 );
 
+ila_rfsoc u_ila_rfsoc (
+	.clk    (sys_clk    ), // input wire clk
+	.probe0 (prf_rf_in  ), // 1 
+	.probe1 (tr_en      )  // 1 
+);
+
 // ila_total u_ila_total (
 // 	.clk    (sys_clk            ), // input wire clk
 // 	.probe0 (ram_bc_angle_clk   ), // 1 
