@@ -30,7 +30,7 @@ module bc_wrapper#(
 (
   	input 					          sys_clk 	     ,
   	input 					          sys_rst 	     ,
-	input                             prf_pin_in     ,
+	input                             prf            ,
     input                             tr_en          ,
 
     output                            sel_o_a        ,
@@ -101,8 +101,7 @@ wire [DATA_BIT-1:0]        data_in          ;
 wire                       trig             ;
 wire 					   mode			    ;
 
-wire                       prf_in           ;
-wire                       ld_mode_in       ;
+wire                       ld_mode          ;
 wire 					   send_flag_in	    ;
 wire 					   single_lane      ;
 wire                       tr_mode          ;
@@ -122,7 +121,7 @@ wire                       reset_sof            ;
 wire [31:0]                cnt_bit;
 
 //--cpu_o_ctrl&&mode
-wire 					   prf_mode_in          ;
+wire 					   prf_mode          ;
 wire 					   prf_start_in         ;
 
 wire 					   cpu_dat_sd_en        ;
@@ -219,8 +218,8 @@ end
         
 
     assign prf_start_in         = app_param0_r[1][0];
-    assign prf_mode_in          = app_param0_r[1][1];
-    assign ld_mode_in           = app_param0_r[1][2];
+    assign prf_mode          = app_param0_r[1][1];
+    assign ld_mode           = app_param0_r[1][2];
     assign send_flag_in         = app_param0_r[1][3];//打拍
     assign single_lane          = app_param0_r[1][4];//打拍
     assign tr_mode              = app_param0_r[1][5];
@@ -244,7 +243,7 @@ end
 cpu_ctrl_sig_gen u_cpu_ctrl_sig_gen(
 . sys_rst       (reset        ) ,
 . sys_clk       (sys_clk      ) ,
-. prf_in        (prf_in       ) ,
+. prf        (prf       ) ,
 . valid_in      (valid_in     ) ,
 . rd_done       (rd_done      ) ,
 . cpu_dat_sd_en (cpu_dat_sd_en) ,
@@ -268,9 +267,7 @@ wave_ctrl_sig_gen#(
 u_wave_ctrl_sig_gen(
 . sys_clk       		(sys_clk       		),
 . reset       		    (reset              ),
-. prf_pin_in    		(prf_pin_in    		),
-. prf_start_in  		(prf_start_in  		),
-. prf_mode_in   		(prf_mode_in   		),
+. prf    		        (prf    		    ),
 . ld_o	                (ld_o	            ),
 . send_flag_in			(send_flag_in	    ),
 . single_lane			(single_lane		),
@@ -318,13 +315,13 @@ u_send_data_gen(
 
 .  valid_in 	        (valid_in	            ) ,
 .  beam_pos_num	        (beam_pos_num           ) ,
-.  prf_in      	        (prf_in                 ) ,
+.  prf      	        (prf                    ) ,
 .  data_in  	        (data_in  	            ) ,
 .  trig     	        (trig     	            ) ,
 .  mode  		        (mode    	            ) ,
 .  bc_group_send_done   (bc_group_send_done     ) ,
 .  now_beam_send_done   (now_beam_send_done     ) ,
-.  ld_mode_in  	        (ld_mode_in             ) ,
+.  ld_mode  	        (ld_mode                ) ,
 .  ld_o  	            (ld_o                   ) ,
 .  dary_o  	            (dary_o                 ) ,
 .  temper_en            (temper_en              ) ,
@@ -405,7 +402,7 @@ ila_spi u_ila_spi (
     .probe7         (ld_o         ),//1 
     .probe8         (trt_o        ),//1 
     .probe9         (trr_o        ),//1 
-    .probe10        (prf_pin_in   ),//1 
+    .probe10        (prf          ),//1 
     .probe11        (tr_o         ),//1 
     .probe12        (cnt_bit      )//32 
 );
@@ -413,8 +410,8 @@ ila_spi u_ila_spi (
 
 vio_sys u_vio_sys (
 .clk          (sys_clk 	            ),//
-.probe_in0    (prf_mode_in          ),//1 
-.probe_in1    (ld_mode_in           ),//1 
+.probe_in0    (prf_mode             ),//1 
+.probe_in1    (ld_mode              ),//1 
 .probe_in2    (send_flag_in         ),//1 
 .probe_in3    (valid_in             ),//1 
 .probe_in4    (beam_pos_num         ),//32
@@ -471,7 +468,5 @@ vio_sys u_vio_sys (
     assign trt_o_h    = trt_o    ;
     assign trr_o_h    = trr_o    ;
     assign rst_o_h    = rst_o    ;
-
-    assign prf_in = prf_pin_in;
 
 endmodule

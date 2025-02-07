@@ -3,7 +3,7 @@ module bram2spi#
 (
     parameter FRAM_BIT_NUM  = 24        ,
     parameter SYS_HZ        = 50_000_000,
-    parameter SCL_HZ        = 10_000_000
+    parameter SCL_HZ        = 1_000_000
 )(
     input           sys_clk     , 
     input           sys_rst     , 
@@ -167,26 +167,36 @@ u_spi_o(
     . send_done  (send_done)
 );
 
-
-
-
-ila_total u_ila_total (
-	.clk(sys_clk), // input wire clk
-
-
-	.probe0 (rama_en        ), //  1    input wire [0:0]   probe0  
-	.probe1 (rama_we        ), //  3    input wire [3:0]   probe1 
-	.probe2 (rama_addr      ), //  32   input wire [31:0]  probe2 
-	.probe3 (rama_din       ), //  32   input wire [31:0]  probe3 
-	.probe4 (rama_dout      ), //  32   input wire [31:0]  probe4 
-	.probe5 (cs_n           ), //  1    input wire [0:0]   probe5 
-	.probe6 (scl            ), //  1    input wire [0:0]   probe6 
-	.probe7 (mosi           ), //  1    input wire [0:0]   probe7 
-	.probe8 (bc_data_done   ), //  1    input wire [0:0]   probe8 
-	.probe9 (valid          ), //  1    input wire [0:0]   probe9 
-	.probe10(beam_pos_num   ), // 32   input wire [31:0]  probe10
-	.probe11(data_in        ), // 24   input wire [31:0]  probe10
-	.probe12(trig_in        )  // 1   input wire [31:0]  probe10
+ram_rfsoc_check u_ram_rfsoc_check(
+.   sys_rst   (sys_rst  ), 
+.   rama_clk  (rama_clk ),
+.   rama_en   (rama_en  ),
+.   rama_wren (rama_wren),
+.   rama_addr (rama_addr),
+.   rama_din  (rama_din )
 );
+
+reg ramb_rd_en_r;
+reg [7:0] ramb_rd_addr_r;
+always @(posedge sys_clk) begin
+    if(sys_rst)begin
+        ramb_rd_en_r <= 0;
+        ramb_rd_addr_r <= 0;
+    end
+    else begin
+        ramb_rd_en_r <= ramb_rd_en;
+        ramb_rd_addr_r <= ramb_rd_addr;
+    end
+end
+
+ram_z7_check u_ram_z7_check(
+.  sys_rst          (sys_rst                    ), 
+.  rama_clk         (sys_clk                    ),
+.  rama_en          (ramb_rd_en_r               ),
+.  rama_wren        (0                          ),
+.  rama_addr        ({24'b0,ramb_rd_addr_r}     ),
+.  rama_din         (ramb_dout                  )
+);
+
 
 endmodule

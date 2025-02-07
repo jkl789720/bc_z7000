@@ -35,6 +35,9 @@ localparam TOTAL_LANE_NUM = LANE_NUM * BEAM_POS_NUM;
 // test Inputs
 reg   sys_clk;
 reg   prf_pin_in;
+reg   prf_rf_in;
+
+// assign prf_rf_in = prf_pin_in;
 
 reg                       sys_rst     ;//
 
@@ -132,7 +135,7 @@ assign  rama_addr = cnt_lane_total * 4;//总的当前写入通道数
 
 assign app_param2 = beam_pos_num;
 assign app_param1 = {31'b0,valid_in};
-assign app_param0 = {25'b0,7'b0001111};//外部产生prf、动态配置、发送、内部产生tr
+assign app_param0 = {25'b0,7'b0001100};//外部产生prf、动态配置、发送、内部产生tr
 
 
 
@@ -289,6 +292,16 @@ always@(posedge sys_clk)begin
 end
 
 
+always@(posedge sys_clk)begin
+	if(sys_rst)	
+		prf_rf_in <= 0;
+	else if(1)begin
+		if(cnt == 100)
+            prf_rf_in <= 1;
+		else if(cnt == CNT_NUM/10-1)
+			prf_rf_in <=0;
+	end
+end
 
 
 
@@ -317,6 +330,7 @@ u_bc_wrapper_z7(
     . sys_clk 	        (sys_clk 	        )       ,
     . sys_rst 	        (sys_rst 	        )       ,
     . prf_pin_in        (prf_pin_in         )       ,
+    . prf_rf_in         (prf_rf_in           )       ,
     . tr_en             (tr_en              )       ,
     . rama_clk          (rama_clk           )       ,
 	. rama_en           (rama_en            )       ,

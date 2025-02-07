@@ -178,6 +178,7 @@ u_bc_wrapper_z7(
     . sys_clk 	            (sys_clk 	    )       ,
     . sys_rst 	            (sys_rst 	    )       ,
     . prf_pin_in            (prf_pin_in     )       ,
+    . prf_rf_in             (prf_rf_in      )       ,
     . tr_en                 (tr_en          )       ,
 
     . rama_clk              (rama_clk       )       ,
@@ -232,6 +233,15 @@ rfsoc_2z7000 u_rfsoc_2z7000(
 
 );
 
+ram_z7_check u_ram_z7_check(
+.  sys_rst          (sys_rst         ), 
+.  rama_clk         (ram_rfsoc_clk   ),
+.  rama_en          (ram_rfsoc_en    ),
+.  rama_wren        (ram_rfsoc_wren  ),
+.  rama_addr        (ram_rfsoc_addr  ),
+.  rama_din         (ram_rfsoc_din   )
+);
+
 bram_spi_in u_bram_spi_in (
   .clka (ram_bc_angle_clk       ),      // input wire clka
   .ena  (ram_bc_angle_en        ),      // input wire ena
@@ -247,43 +257,37 @@ bram_spi_in u_bram_spi_in (
   .doutb(doutb                  )       // output wire [15 : 0] doutb
 );
 
+
+`ifdef DEBUG    
 ila_rfsoc u_ila_rfsoc (
-	.clk    (sys_clk    ), // input wire clk
-	.probe0 (prf_rf_in  ), // 1 
-	.probe1 (tr_en      )  // 1 
+	.clk    (sys_clk            ), // input wire clk
+	.probe0 (prf_rf_in          ), // 1 
+	.probe1 (tr_en              ), // 1 
+	.probe2 (bc_data_done       ), // 1 
+	.probe3 (cs_n               ), // 1 
+	.probe4 (scl                ), // 1 
+	.probe5 (mosi               ), // 1
+	.probe6 (ram_rfsoc_clk      ), // 1 
+	.probe7 (ram_rfsoc_en       ), // 1 
+	.probe8 (ram_rfsoc_wren     ), // 1 
+	.probe9 (ram_rfsoc_addr     ), // 8 
+	.probe10(ram_rfsoc_din      )  // 16  
 );
 
-// ila_total u_ila_total (
-// 	.clk    (sys_clk            ), // input wire clk
-// 	.probe0 (ram_bc_angle_clk   ), // 1 
-// 	.probe1 (ram_bc_angle_en    ), // 1 
-// 	.probe2 (ram_bc_angle_we    ), // 4 
-// 	.probe3 (ram_bc_angle_addr  ), // 32
-// 	.probe4 (ram_bc_angle_din   ), // 32
-// 	.probe5 (ram_bc_angle_dout  ), // 32
-// 	.probe6 (cs_n               ), // 1 
-// 	.probe7 (scl                ), // 1 
-// 	.probe8 (mosi               ), // 1 
-// 	.probe9 (bc_data_done       ), // 1 
-// 	.probe10(ram_rfsoc_clk      ), // 1 
-// 	.probe11(ram_rfsoc_en       ), // 1 
-// 	.probe12(ram_rfsoc_wren     ), // 1 
-// 	.probe13(ram_rfsoc_addr     ), // 8 
-// 	.probe14(ram_rfsoc_din      )  // 16
-// );
 
 
 
-// `ifdef DEBUG    
-// ila_bram u_ila_bram (
-// 	.clk       (sys_clk  ), // input wire clk
-// 	.probe0    (rama_en  ), // input wire [0:0]  probe0  
-// 	.probe1    (rama_we  ), // input wire [3:0]  probe1 
-// 	.probe2    (rama_addr), // input wire [14:0]  probe2 
-// 	.probe3    (rama_din ), // input wire [31:0]  probe3 
-// 	.probe4    (rama_dout), // input wire [31:0]  probe4 
-// 	.probe5    (rama_clk ),  // input wire [0:0]  probe5
-// 	.probe6    (tr_o_a   )  // input wire [0:0]  probe5
-// );
-// `endif
+
+
+ila_z7ps_bccode_bram u_ila_z7ps_bccode_bram (
+	.clk       (sys_clk  ), // input wire clk
+	.probe0    (rama_en  ), // input wire [0:0]  probe0  
+	.probe1    (rama_we  ), // input wire [3:0]  probe1 
+	.probe2    (rama_addr), // input wire [14:0]  probe2 
+	.probe3    (rama_din ), // input wire [31:0]  probe3 
+	.probe4    (rama_dout), // input wire [31:0]  probe4 
+	.probe5    (rama_clk ),  // input wire [0:0]  probe5
+	.probe6    (tr_o_a   )  // input wire [0:0]  probe5
+);
+`endif
 endmodule

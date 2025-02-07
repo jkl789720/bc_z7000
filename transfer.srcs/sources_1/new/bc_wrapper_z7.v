@@ -261,7 +261,7 @@ bc_wrapper#(
 u_bc_wrapper(
   	.    sys_clk 	    ( sys_clk 	    )       ,
   	.    sys_rst 	    ( sys_rst 	    )       ,
-	.    prf_pin_in     ( prf           )       ,
+	.    prf            ( prf           )       ,
     .    tr_en          ( tr_en         )       ,
 
     .    sel_o_a        ( sel_o_a       )       ,
@@ -341,4 +341,18 @@ ila_tx_en u_ila_tx_en (
 	.probe10                 (bram_tx_sel_din      ),  //32
 	.probe11                 (bram_tx_sel_dout     )   //32
 );
+
+wire ld_mode;
+wire tr_mode;
+
+assign  ld_mode = app_param0_r[1][2];
+assign  tr_mode = app_param0_r[1][5];
+
+vio_bc_mode u_vio_bc_mode (
+  .clk(sys_clk),              // input wire clk
+  .probe_in0(prf_mode),  // input wire [0 : 0] probe_in0
+  .probe_in1(ld_mode),  // input wire [0 : 0] probe_in1
+  .probe_in2(tr_mode)  // input wire [0 : 0] probe_in2
+);
+
 endmodule

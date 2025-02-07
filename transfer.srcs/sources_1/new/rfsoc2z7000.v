@@ -51,7 +51,7 @@ assign ram_done_wren= bc_data_done_pos;
 assign ram_done_addr= 8'd248;
 assign ram_done_din = 16'd1;
 
-assign ram_rfsoc_clk  = bc_data_done_pos ? ram_done_clk  : ram_spi_clk ;
+assign ram_rfsoc_clk  = sys_clk;
 assign ram_rfsoc_en   = bc_data_done_pos ? ram_done_en   : ram_spi_en  ;
 assign ram_rfsoc_wren = bc_data_done_pos ? ram_done_wren : ram_spi_wren;
 assign ram_rfsoc_addr = bc_data_done_pos ? ram_done_addr : ram_spi_addr;
@@ -79,15 +79,14 @@ ila_b2b u_ila_b2b (
 	.clk(sys_clk), // input wire clk
 
 
-	.probe0(cs_n), // input wire [0:0]  probe0  
-	.probe1(scl), // input wire [0:0]  probe1 
-	.probe2(mosi), // input wire [0:0]  probe2 
-	.probe3(bc_data_done), // input wire [0:0]  probe3 
-	.probe4(ram_rfsoc_clk), // input wire [0:0]  probe4 
-	.probe5(ram_rfsoc_en), // input wire [0:0]  probe5 
-	.probe6(ram_rfsoc_wren), // input wire [0:0]  probe6 
-	.probe7(ram_rfsoc_addr), // input wire [7:0]  probe7 
-	.probe8(ram_rfsoc_din) // input wire [15:0]  probe8
+	.probe0(cs_n          ),//1            // input wire [0:0]  probe0  
+	.probe1(scl           ),//1            // input wire [0:0]  probe1 
+	.probe2(mosi          ),//1            // input wire [0:0]  probe2 
+	.probe3(bc_data_done  ),//1            // input wire [0:0]  probe3 
+	.probe4(ram_rfsoc_en  ),//1            // input wire [0:0]  probe5 
+	.probe5(ram_rfsoc_wren),//1            // input wire [0:0]  probe6 
+	.probe6(ram_rfsoc_addr),//8            // input wire [7:0]  probe7 
+	.probe7(ram_rfsoc_din ) //16           // input wire [15:0]  probe8
 );
 
 

@@ -17,9 +17,7 @@ module wave_ctrl_sig_gen#(
 (
 input  sys_clk       		,
 input  reset       		    ,
-input  prf_pin_in    		,
-input  prf_start_in  		,
-input  prf_mode_in   		,
+input  prf          		,
 input  ld_o					,
 input  send_flag_in			,
 input  single_lane			,
@@ -38,7 +36,7 @@ always@(posedge sys_clk)begin
     if(reset)
         prf_r <= 0;
     else 
-        prf_r <= {prf_r[1:0],prf_pin_in};
+        prf_r <= {prf_r[1:0],prf};
 end
 assign prf_pos = ~prf_r[2] && prf_r[1];
 

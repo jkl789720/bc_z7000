@@ -43,7 +43,7 @@ input                       delay_ram_rst               ,
 //控制信号
 input                       valid_in                    ,
 input   [31:0]              beam_pos_num                ,
-input                       prf_in                      ,
+input                       prf                      ,
 
 //数据信号
 output reg [DATA_BIT-1:0]   data_in                     ,
@@ -51,7 +51,7 @@ output reg                  trig                        ,
 output reg                  mode                        ,
 input                       bc_group_send_done          ,
 output reg                  now_beam_send_done          ,
-input                       ld_mode_in                  ,
+input                       ld_mode                  ,
 output reg                  ld_o                        ,
 output reg                  dary_o                      ,
 output reg                  temper_en                   ,
@@ -110,19 +110,19 @@ always@(posedge sys_clk)begin
     if(reset)
         prf_r <= 0;
     else 
-        prf_r <= {prf_r[1:0],prf_in};
+        prf_r <= {prf_r[1:0],prf};
 end
 assign prf_pos = ~prf_r[2] && prf_r[1];
 //-----------------------对mode打两拍减小亚稳态传播概率------------------------//
 reg [1:0] ld_mode_r;
-wire ld_mode;
+wire ld_mode_v;
 always@(posedge sys_clk)begin
     if(reset)
         ld_mode_r <= 0;
     else 
-        ld_mode_r <= {ld_mode_r[0],ld_mode_in};
+        ld_mode_r <= {ld_mode_r[0],ld_mode};
 end
-assign ld_mode = ld_mode_r[1];
+assign ld_mode_v = ld_mode_r[1];
 
 //-----------------------------------------------------//
 //rd_data
@@ -386,7 +386,7 @@ always@(*)begin
                     n_state = CMD_GEN;
             end
             WAIT_DARY :begin
-                if(ld_mode == 0)
+                if(ld_mode_v == 0)
                     n_state = SEND_DARY;
                 else if(prf_pos)
                     n_state = SEND_DARY;
@@ -394,7 +394,7 @@ always@(*)begin
                     n_state = c_state;
             end
             // WAIT_DARY :begin
-            //     if(ld_mode == 0)
+            //     if(ld_mode_v == 0)
             //         n_state = SEND_DARY;
             //     else if(prf_pos)
             //         n_state = SEND_DARY;

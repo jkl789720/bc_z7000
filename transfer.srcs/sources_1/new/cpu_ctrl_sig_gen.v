@@ -3,7 +3,7 @@
 module cpu_ctrl_sig_gen(
 input      sys_rst        ,
 input      sys_clk        ,
-input      prf_in         ,
+input      prf         ,
 input      valid_in       ,
 input      send_done      ,
 input      rd_done        ,
@@ -21,7 +21,7 @@ always@(posedge sys_clk)begin
     if(sys_rst)
         prf_r <= 0;
     else 
-        prf_r <= {prf_r[1:0],prf_in};
+        prf_r <= {prf_r[1:0],prf};
 end
 assign prf_pos = ~prf_r[2] && prf_r[1];
 
@@ -93,7 +93,7 @@ end
 
 // ila_cpu_ctrl u_ila_cpu_ctrl(
 // .clk          (sys_clk 		 ), 
-// .probe0       (prf_in        ), 
+// .probe0       (prf        ), 
 // .probe1       (valid_in      ), 
 // .probe2       (send_done     ), 
 // .probe3       (rd_done       ), 
