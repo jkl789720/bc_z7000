@@ -82,13 +82,22 @@ wire          rama_en    ;
 wire          rama_rst   ;
 wire [3:0]    rama_we    ;
 
-wire [31:0]   ram_bc_angle_addr;
-wire          ram_bc_angle_clk ;
-wire [31:0]   ram_bc_angle_din ;
-wire [31:0]   ram_bc_angle_dout;
-wire          ram_bc_angle_en  ;
-wire          ram_bc_angle_rst ;
-wire [3:0]    ram_bc_angle_we;
+wire          ram_bc_code_clk  ;
+wire          ram_bc_code_en   ;
+wire [3:0]    ram_bc_code_we   ;
+wire [31:0]   ram_bc_code_addr ;
+wire [31:0]   ram_bc_code_din  ;
+wire [31:0]   ram_bc_code_dout ;
+wire          ram_bc_code_rst  ;
+
+wire          ram_bc_angle_clk  ;
+wire          ram_bc_angle_en   ;
+wire [3:0]    ram_bc_angle_we   ;
+wire [31:0]   ram_bc_angle_addr ;
+wire [31:0]   ram_bc_angle_din  ;
+wire [31:0]   ram_bc_angle_dout ;
+wire          ram_bc_angle_rst  ;
+
 
 wire          bram_tx_sel_clk  ;
 wire          bram_tx_sel_en   ;
@@ -127,13 +136,14 @@ cpu_sys_wrapper u_cpu_sys_wrapper(
  . app_status0              (app_status0         ),
  . app_status1              (app_status1         ),
 
- . rama_addr                (rama_addr           ),
- . rama_clk                 (rama_clk            ),
- . rama_din                 (rama_din            ),
- . rama_dout                (rama_dout           ),
- . rama_en                  (rama_en             ),
- . rama_rst                 (rama_rst            ),
- . rama_we                  (rama_we             ),
+ . rama_clk                 (ram_bc_code_clk    ),
+ . rama_en                  (ram_bc_code_en     ),
+ . rama_we                  (ram_bc_code_we     ),
+ . rama_addr                (ram_bc_code_addr   ),
+ . rama_din                 (ram_bc_code_din    ),
+ . rama_dout                (ram_bc_code_dout   ),
+ . rama_rst                 (ram_bc_code_rst    ),
+
 
  . ram_bc_angle_addr        (ram_bc_angle_addr   ),
  . ram_bc_angle_clk         (ram_bc_angle_clk    ),
@@ -181,13 +191,13 @@ u_bc_wrapper_z7(
     . prf_rf_in             (prf_rf_in      )       ,
     . tr_en                 (tr_en          )       ,
 
-    . rama_clk              (rama_clk       )       ,
-	. rama_en               (rama_en        )       ,
-	. rama_we               (rama_we        )       ,
-	. rama_addr             (rama_addr      )       ,
-	. rama_din              (rama_din       )       ,
-	. rama_dout             (rama_dout      )       ,
-	. rama_rst              (rama_rst       )       ,
+    . rama_clk              (ram_bc_code_clk )       ,
+	. rama_en               (ram_bc_code_en  )       ,
+	. rama_we               (ram_bc_code_we  )       ,
+	. rama_addr             (ram_bc_code_addr)       ,
+	. rama_din              (ram_bc_code_din )       ,
+	. rama_dout             (ram_bc_code_dout)       ,
+	. rama_rst              (ram_bc_code_rst )       ,
 
     . bram_tx_sel_clk       (bram_tx_sel_clk )       ,
 	. bram_tx_sel_en        (bram_tx_sel_en  )       ,
@@ -259,7 +269,7 @@ bram_spi_in u_bram_spi_in (
 
 
 `ifdef DEBUG    
-ila_rfsoc u_ila_rfsoc (
+ila_rfsoc2z7 u_ila_rfsoc2z7 (
 	.clk    (sys_clk            ), // input wire clk
 	.probe0 (prf_rf_in          ), // 1 
 	.probe1 (tr_en              ), // 1 
@@ -267,27 +277,38 @@ ila_rfsoc u_ila_rfsoc (
 	.probe3 (cs_n               ), // 1 
 	.probe4 (scl                ), // 1 
 	.probe5 (mosi               ), // 1
-	.probe6 (ram_rfsoc_clk      ), // 1 
-	.probe7 (ram_rfsoc_en       ), // 1 
-	.probe8 (ram_rfsoc_wren     ), // 1 
-	.probe9 (ram_rfsoc_addr     ), // 8 
-	.probe10(ram_rfsoc_din      )  // 16  
+	.probe6 (ram_rfsoc_en       ), // 1 
+	.probe7 (ram_rfsoc_wren     ), // 1 
+	.probe8 (ram_rfsoc_addr     ), // 8  
+	.probe9 (ram_rfsoc_din      )  // 16  
 );
-
-
-
-
-
 
 ila_z7ps_bccode_bram u_ila_z7ps_bccode_bram (
-	.clk       (sys_clk  ), // input wire clk
-	.probe0    (rama_en  ), // input wire [0:0]  probe0  
-	.probe1    (rama_we  ), // input wire [3:0]  probe1 
-	.probe2    (rama_addr), // input wire [14:0]  probe2 
-	.probe3    (rama_din ), // input wire [31:0]  probe3 
-	.probe4    (rama_dout), // input wire [31:0]  probe4 
-	.probe5    (rama_clk ),  // input wire [0:0]  probe5
-	.probe6    (tr_o_a   )  // input wire [0:0]  probe5
+	.clk       (ram_bc_code_clk ), // input wire clk
+	.probe0    (ram_bc_code_en  ), // input wire [0:0]  probe0  
+	.probe1    (ram_bc_code_we  ), // input wire [3:0]  probe1 
+	.probe2    (ram_bc_code_addr), // input wire [31:0]  probe2 
+	.probe3    (ram_bc_code_din ), // input wire [31:0]  probe3 
+	.probe4    (ram_bc_code_dout)  // input wire [31:0]  probe4 
 );
+
+ila_z7ps_angle_bram u_ila_z7ps_angle_bram (
+	.clk    (ram_bc_angle_clk   ), // input wire clk
+	.probe0 (ram_bc_angle_en    ), // input wire [0:0]  probe0  
+	.probe1 (ram_bc_angle_we    ), // input wire [3:0]  probe1 
+	.probe2 (ram_bc_angle_addr  ), // input wire [31:0]  probe2 
+	.probe3 (ram_bc_angle_din   ), // input wire [31:0]  probe3 
+	.probe4 (ram_bc_angle_dout  )  // input wire [31:0]  probe4
+);
+
+ila_z7ps_txen_bram u_ila_z7ps_txen_bram (
+	.clk                     (bram_tx_sel_clk       ), // input wire clk
+	.probe0                  (bram_tx_sel_en        ),  //1
+	.probe1                  (bram_tx_sel_we        ),  //4
+	.probe2                  (bram_tx_sel_addr      ),  //32
+	.probe3                  (bram_tx_sel_din       ),  //32
+	.probe4                  (bram_tx_sel_dout      )   //32
+);
+
 `endif
 endmodule

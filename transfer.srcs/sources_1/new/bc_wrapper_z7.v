@@ -324,35 +324,5 @@ bram_tx_sel u_bram_tx_sel (
 );
 
 
-ila_tx_en u_ila_tx_en (
-	.clk                     (sys_clk   ), // input wire clk
-
-
-	.probe0                  (tx_sel               ), //8
-	.probe1                  (trt                  ), //8
-	.probe2                  (trr                  ), //8
-	.probe3                  (bram_tx_sel_addr_read), //4
-	.probe4                  (trt_o_h              ), //1
-	.probe5                  (trr_o_h              ),  //1
-	.probe6                  (bram_tx_sel_clk      ),  //1
-	.probe7                  (bram_tx_sel_en       ),  //1
-	.probe8                  (bram_tx_sel_we       ),  //4
-	.probe9                  (bram_tx_sel_addr     ),  //32
-	.probe10                 (bram_tx_sel_din      ),  //32
-	.probe11                 (bram_tx_sel_dout     )   //32
-);
-
-wire ld_mode;
-wire tr_mode;
-
-assign  ld_mode = app_param0_r[1][2];
-assign  tr_mode = app_param0_r[1][5];
-
-vio_bc_mode u_vio_bc_mode (
-  .clk(sys_clk),              // input wire clk
-  .probe_in0(prf_mode),  // input wire [0 : 0] probe_in0
-  .probe_in1(ld_mode),  // input wire [0 : 0] probe_in1
-  .probe_in2(tr_mode)  // input wire [0 : 0] probe_in2
-);
 
 endmodule

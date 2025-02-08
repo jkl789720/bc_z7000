@@ -572,18 +572,7 @@ always@(posedge sys_clk)begin
         endcase
     end
 end
-// always@(posedge sys_clk)begin
-//     if(reset)
-//         beam_pos_cnt <= 0;
-//     else if(valid_pos && beam_pos_num > 1)
-//         beam_pos_cnt <= 0;
-//     else if(end_now_beam)begin
-//         if(beam_pos_cnt >= beam_pos_num - 1)
-//             beam_pos_cnt <= 0;
-//         else
-//             beam_pos_cnt <= beam_pos_cnt + 1;
-//     end
-// end
+
 bram u_bram (
   .clka (bc_ram_clk ), 
   .ena  (bc_ram_en  ), 
@@ -619,49 +608,6 @@ bram_delay u_bram_delay (
 );
 
 //------------------------调试信号
-reg  [23:0]                     rd_addr_r0        ;
-reg  [23:0]                     beam_pos_cnt_r0   ;
-always@(posedge sys_clk)begin
-    if(reset)
-        beam_pos_cnt_r0 <= 0;
-    else
-        beam_pos_cnt_r0 <= beam_pos_cnt;
-end
-
-always@(posedge sys_clk)begin
-    if(reset)
-        rd_addr_r0 <= 0;
-    else
-        rd_addr_r0 <= rd_addr;
-end
-
-`ifdef DEBUG
-ila_sd_da_sar u_ila_sd_da_sar(
-.clk          (sys_clk 		  ),
-.probe0      (ld_o             ),//1
-.probe1      (dary_o           ),//1
-.probe2      (c_state          ),//5
-.probe3      (n_state          ),//5
-.probe4      (valid_pos        ),//1
-.probe5      (prf_pos          ),//1
-.probe6      (beam_pos_cnt_r0  ),//24
-.probe7      (beam_pos_num     ),//32
-.probe8      (valid_in         ) //1
-
-);
-
-ila_bram_read u_ila_bram_read (
-	.clk(sys_clk), // input wire clk
-
-
-	.probe0(rd_en), // input wire [0:0]  probe0  
-	.probe1(rd_addr), // input wire [31:0]  probe1 
-	.probe2(rd_data), // input wire [127:0]  probe2
-	.probe3(send_data[25:0]) // input wire [25:0]  probe2
-); 
-
-`endif
-
 
 always@(posedge sys_clk)begin
     if(reset)

@@ -75,19 +75,4 @@ u_spi2bram(
 );
 
 
-ila_b2b u_ila_b2b (
-	.clk(sys_clk), // input wire clk
-
-
-	.probe0(cs_n          ),//1            // input wire [0:0]  probe0  
-	.probe1(scl           ),//1            // input wire [0:0]  probe1 
-	.probe2(mosi          ),//1            // input wire [0:0]  probe2 
-	.probe3(bc_data_done  ),//1            // input wire [0:0]  probe3 
-	.probe4(ram_rfsoc_en  ),//1            // input wire [0:0]  probe5 
-	.probe5(ram_rfsoc_wren),//1            // input wire [0:0]  probe6 
-	.probe6(ram_rfsoc_addr),//8            // input wire [7:0]  probe7 
-	.probe7(ram_rfsoc_din ) //16           // input wire [15:0]  probe8
-);
-
-
 endmodule

@@ -390,7 +390,7 @@ temperature #(
 wire [31:0] sd;
 assign sd = sd_o;
 
-ila_spi u_ila_spi (
+ila_spi_bc_code u_ila_spi_bc_code (
 	.clk	        (sys_clk	  ),// 
 	.probe0	        (PLUART_txd	  ),//1  
 	.probe1	        (PLUART_rxd	  ),//1 
@@ -408,7 +408,7 @@ ila_spi u_ila_spi (
 );
 
 
-vio_sys u_vio_sys (
+vio_ctrl_reg u_vio_ctrl_reg (
 .clk          (sys_clk 	            ),//
 .probe_in0    (prf_mode             ),//1 
 .probe_in1    (ld_mode              ),//1 
