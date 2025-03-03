@@ -123,6 +123,14 @@ wire [23:0] beam_pos_cnt;
 
 wire [31:0] beam_pos_num;
 
+wire [3:0] bc_mode;
+wire sel_param;
+wire image_start;
+
+assign bc_mode = app_param1_r[1][5:2];
+assign sel_param = app_param1_r[1][6];
+assign image_start = app_param1_r[1][8];
+
 assign beam_pos_num = app_param2_r[1][31:0];
 
 assign prf_mode = app_param0_r[1][1];
@@ -143,16 +151,16 @@ assign BC1_SEL  = {4{sel_o_h}} ;
 assign BC1_CLK  = {4{scl_o_h}} ;
 assign BC1_DATA = sd_o_h[15:0] ;
 assign BC1_LD   = {4{ld_o_h}}  ;
-assign BC1_TRT  = trt[3:0]     ;
-assign BC1_TRR  = trr[3:0]     ;
+// assign BC1_TRT  = trt[3:0]     ;//边坡
+// assign BC1_TRR  = trr[3:0]     ;
 
 
 assign BC2_SEL  = {4{sel_o_h}} ;
 assign BC2_CLK  = {4{scl_o_h}} ;
 assign BC2_DATA = sd_o_h[31:16];
 assign BC2_LD   = {4{ld_o_h}}  ;
-assign BC2_TRT  = trt[7:4]     ;
-assign BC2_TRR  = trr[7:4]     ;
+// assign BC2_TRT  = trt[7:4]     ;//边坡
+// assign BC2_TRR  = trr[7:4]     ;
 
 assign BC_RST   = rst_o_h      ;
 
@@ -321,6 +329,25 @@ bram_tx_sel u_bram_tx_sel (
   .addrb(bram_tx_sel_addr_read  ),      // input wire [3 : 0] addrb
   .dinb (0                      ),      // input wire [15 : 0] dinb
   .doutb(bram_tx_sel_dout_read  )       // output wire [15 : 0] doutb
+);
+
+
+
+bc_txen_expand u_bc_txen_expand(
+.  sys_clk     (sys_clk     ),
+.  sys_rst     (sys_rst     ),
+.  prf_in      (prf         ),
+.  trt_o       (trt_o_h     ),
+.  trr_o       (trr_o_h     ),
+.  bc_mode     (bc_mode     ),
+.  sel_param   (sel_param   ),
+.  image_start (image_start ),
+
+.  BC1_TRT     (BC1_TRT    ),
+.  BC1_TRR     (BC1_TRR    ),
+.  BC2_TRT     (BC2_TRT    ),
+.  BC2_TRR     (BC2_TRR    )
+
 );
 
 
