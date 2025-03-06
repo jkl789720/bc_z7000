@@ -349,7 +349,34 @@ bc_txen_expand u_bc_txen_expand(
 .  BC2_TRR     (BC2_TRR    )
 
 );
+`ifdef DEBUG
+    vio_new_reg u_vio_new_reg (
+    .clk(sys_clk),              // input wire clk
+    .probe_in0(bc_mode),  // input wire [3 : 0] probe_in0
+    .probe_in1(sel_param),  // input wire [0 : 0] probe_in1
+    .probe_in2(image_start)  // input wire [0 : 0] probe_in2
+    );
+
+    ila_trt u_ila_trt (
+        .clk(sys_clk), // input wire clk
 
 
-
+        .probe0     (BC1_TRT[0] ), // input wire [0:0]  probe0  
+        .probe1     (BC1_TRR[0] ), // input wire [0:0]  probe1 
+        .probe2     (BC1_TRT[1] ), // input wire [0:0]  probe2 
+        .probe3     (BC1_TRR[1] ), // input wire [0:0]  probe3 
+        .probe4     (BC1_TRT[2] ), // input wire [0:0]  probe4 
+        .probe5     (BC1_TRR[2] ), // input wire [0:0]  probe5 
+        .probe6     (BC1_TRT[3] ), // input wire [0:0]  probe6 
+        .probe7     (BC1_TRR[3] ), // input wire [0:0]  probe7
+        .probe8     (BC2_TRT[0] ), // input wire [0:0]  probe0  
+        .probe9     (BC2_TRR[0] ), // input wire [0:0]  probe1 
+        .probe10    (BC2_TRT[1] ), // input wire [0:0]  probe2 
+        .probe11    (BC2_TRR[1] ), // input wire [0:0]  probe3 
+        .probe12    (BC2_TRT[2] ), // input wire [0:0]  probe4 
+        .probe13    (BC2_TRR[2] ), // input wire [0:0]  probe5 
+        .probe14    (BC2_TRT[3] ), // input wire [0:0]  probe6 
+        .probe15    (BC2_TRR[3] ) // input wire [0:0]  probe7
+    );
+`endif
 endmodule

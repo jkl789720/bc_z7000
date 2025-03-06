@@ -24,14 +24,13 @@ module tb_wrapper_new#(
     parameter BEAM_NUM         = 1024
 )
 ();
+//-------------------仿真参数修改处----------------//
+localparam LANE_NUM         = 64*2;//天线通道数
+localparam BEAM_POS_NUM     =  4;//波位数
+localparam CHANNEL_NUM      = 32 ;// 芯片数
+localparam BIT_NUM          = 106; //单spi通道bit数 
 
-localparam LANE_NUM = 64*2;
-localparam BEAM_POS_NUM =  4;
-localparam TOTAL_LANE_NUM = LANE_NUM * BEAM_POS_NUM;
-
-
-
-
+//-----------------变量定义------------------------//
 // test Inputs
 reg   sys_clk;
 reg   prf_pin_in;
@@ -75,6 +74,31 @@ wire            bram_tx_sel_rst ;
 
 
 
+reg  [31 : 0]               wr_cnt_lane , wr_cnt_beam           ;//通道计数，波位计数
+wire                        add_wr_cnt_lane , end_wr_cnt_lane   ;
+wire                        add_wr_cnt_beam , end_wr_cnt_beam   ;
+
+wire                        w2r                                 ;
+wire [31:0]                 cnt_lane_total                      ;
+
+
+//rama
+reg                       rama_clk         ;
+wire                      rama_en         ;
+reg    [3 : 0]            rama_we         ;
+wire   [31 : 0]           rama_addr       ;
+wire   [31 : 0]            rama_din        ;
+wire   [31 : 0]           rama_dout       ;
+wire                      rama_rst        ; 
+
+wire [31:0] 			  app_param0      ;
+wire [31:0] 			  app_param1      ;
+wire [31:0] 			  app_param2      ;
+
+
+wire [15:0] data_low,data_high;
+
+//-------------------------生成波控使能----------------------------//
 always @(posedge sys_clk) begin
     if(sys_rst)
         bram_tx_sel_we <= 4'hf;
@@ -93,7 +117,7 @@ always @(posedge sys_clk) begin
     end
 end
 
-wire [15:0] data_low,data_high;
+
 assign data_low  = bram_tx_sel_addr >> 1;
 assign data_high  = 1'b1+(bram_tx_sel_addr >> 1);
 assign bram_tx_sel_din = {data_high,data_low};
@@ -102,29 +126,8 @@ assign bram_tx_sel_din = {data_high,data_low};
 
 
 
-reg  [31 : 0]               wr_cnt_lane , wr_cnt_beam           ;//通道计数，波位计数
-wire                        add_wr_cnt_lane , end_wr_cnt_lane   ;
-wire                        add_wr_cnt_beam , end_wr_cnt_beam   ;
 
-wire                        w2r                                 ;
-wire [31:0]                 cnt_lane_total                      ;
-
-wire [31:0]               beam_pos_num = BEAM_POS_NUM;
-
-//rama
-reg                       rama_clk         ;
-wire                      rama_en         ;
-reg    [3 : 0]            rama_we         ;
-wire   [31 : 0]           rama_addr       ;
-reg   [31 : 0]            rama_din        ;
-wire   [31 : 0]           rama_dout       ;
-wire                      rama_rst        ; 
-
-wire [31:0] 			  app_param0      ;
-wire [31:0] 			  app_param1      ;
-wire [31:0] 			  app_param2      ;
-
-
+//-------------------------生成波控码----------------------------//
 
 assign  rama_rst  = 0         ;
 assign  rama_en   = 1         ;
@@ -133,7 +136,7 @@ assign  rama_addr = cnt_lane_total * 4;//总的当前写入通道数
 
 
 
-assign app_param2 = beam_pos_num;
+assign app_param2 = BEAM_POS_NUM;
 assign app_param1 = {31'b0,valid_in};
 assign app_param0 = {25'b0,7'b0001100};//外部产生prf、动态配置、发送、内部产生tr
 
@@ -175,7 +178,7 @@ assign end_wr_cnt_beam = add_wr_cnt_beam && wr_cnt_beam == BEAM_POS_NUM - 1;
 
 assign cnt_lane_total = wr_cnt_beam * LANE_NUM + wr_cnt_lane;
 
-assign w2r = (cnt_lane_total == TOTAL_LANE_NUM - 1);
+assign w2r = (cnt_lane_total == LANE_NUM * BEAM_POS_NUM - 1);
 reg [31:0] cnt_valid;
 always@(posedge rama_clk )begin
     if(sys_rst)
@@ -210,7 +213,6 @@ always@(posedge rama_clk )begin
         cnt_valid <= 0;
         wr_cnt_lane <= 0;
         wr_cnt_beam <= 0;
-        rama_din    <= 0;
     end
     else
         case (c_state)
@@ -220,7 +222,6 @@ always@(posedge rama_clk )begin
                 cnt_valid <= 0;
                 wr_cnt_lane <= 0;
                 wr_cnt_beam <= 0;
-                rama_din    <= 0;
             end
             WRITE :begin
                 if(w2r)
@@ -254,16 +255,20 @@ always@(posedge rama_clk )begin
 
 end
 
-always @(*) begin
-    if(sys_rst)
-        rama_din <= 0;
-    if(c_state == WRITE)begin
-        if(wr_cnt_lane >=  (4 * wr_cnt_beam) && wr_cnt_lane < 4 * (wr_cnt_beam + 1))
-            rama_din <= 0;
-        else
-            rama_din <= 32'h5555_5555;
-    end
-end
+
+//-----------------2025/03/04修改，注掉原有逻辑，RAM数据写入RAM索引-----------------//
+// always @(*) begin
+//     if(sys_rst)
+//         rama_din <= 0;
+//     if(c_state == WRITE)begin
+//         if(wr_cnt_lane >=  (4 * wr_cnt_beam) && wr_cnt_lane < 4 * (wr_cnt_beam + 1))//每个波位关掉4个通道，根据波位编号关对应编号的芯片 比如波位0就关芯片0
+//             rama_din <= 0;
+//         else
+//             rama_din <= 32'h5555_5555;
+//     end
+// end
+
+assign rama_din = cnt_lane_total;
 
 //-------------------生成prf信号----------------------//
 localparam PRF_FREQ_HZ = 1000;
@@ -379,5 +384,55 @@ BC_TRANS u_BC_TRANS(
     .	BC_LATCH (ld_o_a) ,//ld
     .	BC_RXD   (BC_RXD  )
 );
+
+
+
+//---------------------波控码检验------------------------//
+wire             clka_check;
+wire             ena_check;
+wire [3:0]       wea_check;
+wire [31:0]      addra_check;
+wire [31:0]      dina_check;
+wire [31:0]      douta_check;
+
+wire [31:0] spi_clk;
+wire [31:0] spi_cs_n;
+wire [31:0] spi_mosi;
+wire [31:0] beam_pos_num;
+
+assign beam_pos_num = app_param2;
+
+assign spi_clk = signal_expansion(BC2_CLK,BC1_CLK);
+assign spi_cs_n = signal_expansion(BC2_SEL,BC1_SEL);
+assign spi_mosi = {BC2_DATA,BC1_DATA};
+check_wrapper #(
+    .CHANNEL_NUM  (32 ),
+    .BIT_NUM      (106)
+)
+ u_check_wrapper (
+    .clk                     ( sys_clk            ),
+    .rst_n                   ( ~sys_rst           ),
+    .spi_clk                 ( spi_clk            ),
+    .spi_cs_n                ( spi_cs_n           ),
+    .spi_mosi                ( spi_mosi           ),
+    .beam_pos_num            ( beam_pos_num       ),
+    .clka                    ( clka_check         ),
+    .ena                     ( ena_check          ),
+    .wea                     ( wea_check[0]       ),
+    .addra                   ( addra_check[31:2]  ),
+    .dina                    ( dina_check         ),
+    .douta                   ( douta_check        )
+);
+
+function [31:0] signal_expansion;
+    input [3:0] sig1;//第一个实参
+    input [3:0] sig0;//第二个实参
+    begin
+        signal_expansion = {
+                        {4{sig1[3]}},{4{sig1[2]}},{4{sig1[1]}},{4{sig1[0]}},
+                        {4{sig0[3]}},{4{sig0[2]}},{4{sig0[1]}},{4{sig0[0]}}
+        };
+    end
+endfunction
 
 endmodule

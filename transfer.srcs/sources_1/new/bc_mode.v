@@ -169,7 +169,7 @@ always @(posedge sys_clk) begin
                 trr_o_p_3 = 0 ;
             end
             8:begin
-                trt_o_p_0 = cnt_prf ? trt_o : 0 ;
+                trt_o_p_0 = cnt_prf ? trt_o : 0 ;//先出V再出H
                 trr_o_p_0 = cnt_prf ? trr_o : 0 ;
                 trt_o_p_1 = cnt_prf ? trt_o : 0 ;
                 trr_o_p_1 = cnt_prf ? trr_o : 0 ;
