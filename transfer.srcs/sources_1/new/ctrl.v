@@ -71,7 +71,7 @@ vio_reset u_vio_reset (
 );
 `endif
 
-//添加了一行注释
+//添加了一行注�?
 
 //PS
 wire [31:0]   rama_addr  ;
