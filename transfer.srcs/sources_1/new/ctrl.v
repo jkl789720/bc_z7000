@@ -10,7 +10,7 @@ module ctrl#(
     
     parameter GROUP_CHIP_NUM   = 32                              ,
     parameter GROUP_NUM        = 1                               ,
-    parameter SCLHZ            = 10_000_000                      ,
+    parameter SCLHZ            = 2_000_000                      ,
 
 
 
@@ -71,7 +71,7 @@ vio_reset u_vio_reset (
 );
 `endif
 
-//添加了一行注�?
+//添加了一行注\E9\87?
 
 //PS
 wire [31:0]   rama_addr  ;
@@ -127,43 +127,67 @@ wire [31:0]   app_status0;
 wire [31:0]   app_status1;
 
 
+//---------------------娉㈡帶鐮佹楠?------------------------//
+wire             clka_check ;
+wire             ena_check  ;
+wire [3:0]       wea_check  ;
+wire [31:0]      addra_check;
+wire [31:0]      dina_check ;
+wire [31:0]      douta_check;
+
+wire [31:0]      spi_clk;
+wire [31:0]      spi_cs_n;
+wire [31:0]      spi_mosi;
+wire [31:0]      beam_pos_num;
+
+
 cpu_sys_wrapper u_cpu_sys_wrapper(
- . app_param0               (app_param0          ),
- . app_param1               (app_param1          ),
- . app_param2               (app_param2          ),
- . app_param3               (app_param3          ),
+ . app_param0               (app_param0           ),
+ . app_param1               (app_param1           ),
+ . app_param2               (app_param2           ),
+ . app_param3               (app_param3           ),
 
- . app_status0              (app_status0         ),
- . app_status1              (app_status1         ),
+ . app_status0              (app_status0          ),
+ . app_status1              (app_status1          ),
 
- . rama_clk                 (ram_bc_code_clk    ),
- . rama_en                  (ram_bc_code_en     ),
- . rama_we                  (ram_bc_code_we     ),
- . rama_addr                (ram_bc_code_addr   ),
- . rama_din                 (ram_bc_code_din    ),
- . rama_dout                (ram_bc_code_dout   ),
- . rama_rst                 (ram_bc_code_rst    ),
+ . rama_clk                 (ram_bc_code_clk      ),
+ . rama_en                  (ram_bc_code_en       ),
+ . rama_we                  (ram_bc_code_we       ),
+ . rama_addr                (ram_bc_code_addr     ),
+ . rama_din                 (ram_bc_code_din      ),
+ . rama_dout                (ram_bc_code_dout     ),
+ . rama_rst                 (ram_bc_code_rst      ),
 
 
- . ram_bc_angle_addr        (ram_bc_angle_addr   ),
- . ram_bc_angle_clk         (ram_bc_angle_clk    ),
- . ram_bc_angle_din         (ram_bc_angle_din    ),
- . ram_bc_angle_dout        (ram_bc_angle_dout   ),
- . ram_bc_angle_en          (ram_bc_angle_en     ),
- . ram_bc_angle_rst         (ram_bc_angle_rst    ),
- . ram_bc_angle_we          (ram_bc_angle_we     ),
+ . ram_bc_angle_addr        (ram_bc_angle_addr    ),
+ . ram_bc_angle_clk         (ram_bc_angle_clk     ),
+ . ram_bc_angle_din         (ram_bc_angle_din     ),
+ . ram_bc_angle_dout        (ram_bc_angle_dout    ),
+ . ram_bc_angle_en          (ram_bc_angle_en      ),
+ . ram_bc_angle_rst         (ram_bc_angle_rst     ),
+ . ram_bc_angle_we          (ram_bc_angle_we      ),
 
- . bram_tx_sel_clk          (bram_tx_sel_clk     ),
- . bram_tx_sel_en           (bram_tx_sel_en      ),
- . bram_tx_sel_we           (bram_tx_sel_we      ),
- . bram_tx_sel_addr         (bram_tx_sel_addr    ),
- . bram_tx_sel_din          (bram_tx_sel_din     ),
- . bram_tx_sel_dout         (bram_tx_sel_dout    ),
- . bram_tx_sel_rst          (bram_tx_sel_rst     ),
+ . bram_tx_sel_clk          (bram_tx_sel_clk      ),
+ . bram_tx_sel_en           (bram_tx_sel_en       ),
+ . bram_tx_sel_we           (bram_tx_sel_we       ),
+ . bram_tx_sel_addr         (bram_tx_sel_addr     ),
+ . bram_tx_sel_din          (bram_tx_sel_din      ),
+ . bram_tx_sel_dout         (bram_tx_sel_dout     ),
+ . bram_tx_sel_rst          (bram_tx_sel_rst      ),
 
- . bc_uart_adjust_rxd       (BC_UART_ADJUST_RX   ),
- . bc_uart_adjust_txd       (BC_UART_ADJUST_TX   )
+ . ram_bc_code_read_clk     (clka_check           ),
+ . ram_bc_code_read_en      (ena_check            ),
+ . ram_bc_code_read_we      (wea_check            ),
+ . ram_bc_code_read_addr    (addra_check          ),
+ . ram_bc_code_read_din     (dina_check           ),
+ . ram_bc_code_read_dout    (douta_check          ),
+ . ram_bc_code_read_rst     (                     ),
+
+ . bc_uart_adjust_rxd       (BC_UART_ADJUST_RX    ),
+ . bc_uart_adjust_txd       (BC_UART_ADJUST_TX    )
  );
+
+
 
  bc_wrapper_z7#(
     `ifndef G3
@@ -268,6 +292,7 @@ bram_spi_in u_bram_spi_in (
 );
 
 
+
 `ifdef DEBUG    
 ila_rfsoc2z7 u_ila_rfsoc2z7 (
 	.clk    (sys_clk            ), // input wire clk
@@ -309,6 +334,41 @@ ila_z7ps_txen_bram u_ila_z7ps_txen_bram (
 	.probe3                  (bram_tx_sel_din       ),  //32
 	.probe4                  (bram_tx_sel_dout      )   //32
 );
+
+//---------------------娉㈡帶鐮佹楠?------------------------//
+assign beam_pos_num = app_param2;
+assign spi_clk = signal_expansion(BC2_CLK,BC1_CLK);
+assign spi_cs_n = signal_expansion(BC2_SEL,BC1_SEL);
+assign spi_mosi = {BC2_DATA,BC1_DATA};
+check_wrapper #(
+    .CHANNEL_NUM  (32 ),
+    .BIT_NUM      (106)
+)
+ u_check_wrapper (
+    .clk                     ( sys_clk            ),
+    .rst_n                   ( ~sys_rst           ),
+    .spi_clk                 ( spi_clk            ),
+    .spi_cs_n                ( spi_cs_n           ),
+    .spi_mosi                ( spi_mosi           ),
+    .beam_pos_num            ( beam_pos_num       ),
+    .clka                    ( clka_check         ),
+    .ena                     ( ena_check          ),
+    .wea                     ( wea_check[0]       ),
+    .addra                   ( addra_check[31:2]  ),
+    .dina                    ( dina_check         ),
+    .douta                   ( douta_check        )
+);
+
+function [31:0] signal_expansion;
+    input [3:0] sig1;//绗竴涓疄鍙?
+    input [3:0] sig0;//绗簩涓疄鍙?
+    begin
+        signal_expansion = {
+                        {4{sig1[3]}},{4{sig1[2]}},{4{sig1[1]}},{4{sig1[0]}},
+                        {4{sig0[3]}},{4{sig0[2]}},{4{sig0[1]}},{4{sig0[0]}}
+        };
+    end
+endfunction
 
 `endif
 endmodule
