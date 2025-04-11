@@ -39,7 +39,7 @@ module bc_wrapper_z7#(
 	output  [31 : 0]                rama_dout       ,
 	input                           rama_rst        ,
 
-//ram_port
+//tr_en_sel_ram
     input                           bram_tx_sel_clk ,
     input                           bram_tx_sel_en  ,
     input  [3:0]                    bram_tx_sel_we  ,
@@ -55,12 +55,7 @@ module bc_wrapper_z7#(
     input   [31:0] 			        app_param3	    ,
     output  [31:0] 			        app_status0	    ,
     output  [31:0] 			        app_status1	    ,  
-    
-    
 
-
-
- 
 //BC1_new
     output  [3:0]                   BC1_SEL      ,   
     output  [3:0]                   BC1_CLK      ,         
@@ -81,278 +76,392 @@ module bc_wrapper_z7#(
     output                          BC_RST       
 
 );
+wire reset;
+//-------------------wire declare----------------------//
+//spi
+wire [DATA_BIT-1:0]        data_in          ;
+wire                       trig             ;
+wire 					   mode			    ;
+
+wire                       ld_mode          ;
+wire 					   send_flag_in	    ;
+wire 					   single_lane      ;
+wire                       tr_mode          ;
+wire                       polarization_mode;
+wire                       temper_req       ;
+wire                       temper_data_valid;
+
+wire                       image_start      ;
+wire                       sel_param        ;    
+wire [3:0]                 bc_mode          ;
+wire                       valid_in         ;
+
+wire [31:0]                beam_pos_num     ;
+
+wire                       temper_ready     ;
+wire                       temper_en        ;
+
+wire                       temper_read_done    ;
+
+wire                       rst_soft            ;
+
+wire [31:0]                cnt_bit;
+
+//--cpu_o_ctrl&&mode
+wire 					   prf_mode             ;
+wire 					   prf_start_in         ;
+
+wire 					   cpu_dat_sd_en        ;
 
 
-//ram_read_port
+wire                       spi_done             ;//一个组发送完，而不是整个波位发送完成，这是区分于温度命名的
+wire                       ld_done              ;
+wire                       now_beam_send_done   ;
 
-wire                bram_tx_sel_en_read   ;   
-wire [3 : 0]        bram_tx_sel_addr_read ;  
-wire [15 : 0]       bram_tx_sel_dout_read ;  
+wire rd_done = 0;
+
+wire                       scl_o    	 ;
+wire                       sel_o         ;
+wire                       cmd_flag      ;
+wire [GROUP_CHIP_NUM-1:0]  sd_o          ;
+wire                       dary_o        ;
+wire                       ld_o          ;
+wire                       trt_o         ;
+wire                       trr_o         ;
+wire                       rst_o         ;
+
+wire  [7:0]                temper_data0  ;
+wire  [7:0]                temper_data1  ;
+wire  [7:0]                temper_data2  ;
+wire  [7:0]                temper_data3  ;
 
 
 
-wire                        sel_o_h     ;
-wire                        scl_o_h     ;
-wire [GROUP_CHIP_NUM-1:0]   sd_o_h      ;
-wire                        ld_o_h      ;
-wire                        dary_o_h    ;
-wire                        trt_o_h     ;
-wire                        trr_o_h     ;
-wire                        rst_o_h     ;
+wire                       bc_ram_clk        ;
+wire                       bc_ram_en         ;
+wire [3:0]                 bc_ram_we         ;
+wire [31:0]                bc_ram_addr       ;
+wire [31:0]                bc_ram_din        ;
+wire [31:0]                bc_ram_dout       ;
+wire                       bc_ram_rst        ;
+
+wire                       delay_ram_clk     ;
+wire                       delay_ram_en      ;
+wire [3:0]                 delay_ram_we      ;
+wire [31:0]                delay_ram_addr    ;
+wire [31:0]                delay_ram_din     ;
+wire [31:0]                delay_ram_dout    ;
+wire                       delay_ram_rst     ;
+
+wire [31:0] bc_top_addr; 
+wire bc_flag;
+
+wire [7:0] trt_ps;
+wire [7:0] trr_ps;
+
+wire [7:0] trt;
+wire [7:0] trr;
+
+wire [23:0] beam_pos_cnt;
+
 
 reg [31:0]  app_param0_r [1:0];
 reg [31:0]  app_param1_r [1:0];
 reg [31:0]  app_param2_r [1:0];
 
 
-wire prf_mode;
-wire prf;
-reg [1:0] prf_r;
-wire prf_pos;
-reg [7:0] cnt_prf;
+//地址分配
+assign bc_top_addr    = (((GROUP_NUM*GROUP_CHIP_NUM) << 4))*BEAM_NUM;
+assign delay_ram_clk  = rama_clk;
+assign delay_ram_en   = (~bc_flag) ? rama_en: 0;
+assign delay_ram_we   = (~bc_flag) ? rama_we: 0;
+assign delay_ram_addr = (~bc_flag) ? rama_addr - (bc_top_addr) : 0;
+assign delay_ram_din  = (~bc_flag) ? rama_din : 0;
 
-wire valid;
-reg [1:0] valid_r;
-wire valid_pos;
+assign delay_ram_rst = rama_rst;
 
-wire [7:0] tx_sel;//选择对应bit作为发射通道，为1作为发射，发射使能来了就发射，否则作为接收
-wire [7:0] trt;
-wire [7:0] trr;
+assign bc_ram_clk  = rama_clk;
+assign bc_ram_en   = bc_flag ? rama_en: 0;
+assign bc_ram_we   = bc_flag ? rama_we: 0;
+assign bc_ram_addr = bc_flag ? rama_addr : 0;
+assign bc_ram_din  = bc_flag ? rama_din : 0;
 
-wire [23:0] beam_pos_cnt;
+assign bc_ram_rst = rama_rst;
 
-wire [31:0] beam_pos_num;
+assign rama_dout = (rama_addr >= bc_top_addr) ? delay_ram_dout: bc_ram_dout;
+assign bc_flag = (rama_addr < bc_top_addr);
 
-wire [3:0] bc_mode;
-wire sel_param;
-wire image_start;
-wire rst_sof;
-wire reset;
-assign reset = sys_rst || rst_sof;
-
-assign bc_mode = app_param1_r[1][5:2];
-assign sel_param = app_param1_r[1][6];
-assign rst_sof = app_param1_r[1][7];
-assign image_start = app_param1_r[1][8];
-
-assign beam_pos_num = app_param2_r[1][31:0];
-
-assign prf_mode = app_param0_r[1][1];
-assign prf = prf_mode ? prf_pin_in : prf_rf_in;
-
-
-assign tx_sel = bram_tx_sel_dout_read[7:0];
-
-genvar kk;
-generate
-    for(kk = 0;kk < 8;kk = kk + 1)begin:blk0
-        assign trt[kk] =  tx_sel[kk] ? trt_o_h : 0;
-        assign trr[kk] =  tx_sel[kk] ? trr_o_h : 0;
-    end
-endgenerate
-
-assign BC1_SEL  = {4{sel_o_h}} ;
-assign BC1_CLK  = {4{scl_o_h}} ;
-assign BC1_DATA = sd_o_h[15:0] ;
-assign BC1_LD   = {4{ld_o_h}}  ;
-// assign BC1_TRT  = trt[3:0]     ;//边坡
-// assign BC1_TRR  = trr[3:0]     ;
-
-
-assign BC2_SEL  = {4{sel_o_h}} ;
-assign BC2_CLK  = {4{scl_o_h}} ;
-assign BC2_DATA = sd_o_h[31:16];
-assign BC2_LD   = {4{ld_o_h}}  ;
-// assign BC2_TRT  = trt[7:4]     ;//边坡
-// assign BC2_TRR  = trr[7:4]     ;
-
-assign BC_RST   = rst_o_h      ;
-
-
-//生成一份打拍的代码
-always @(posedge  sys_clk) begin
+//寄存寄存器
+always@(posedge sys_clk)begin
     if(sys_rst)begin
         app_param0_r[0] <= 0;
-        app_param0_r[1] <= 0;
-    end
-    else begin
-        app_param0_r[0] <= app_param0;
-        app_param0_r[1] <= app_param0_r[0];
-    end
-end
-
-//生成一份打拍的代码
-always @(posedge  sys_clk) begin
-    if(sys_rst)begin
         app_param1_r[0] <= 0;
-        app_param1_r[1] <= 0;
-    end
-    else begin
-        app_param1_r[0] <= app_param1;
-        app_param1_r[1] <= app_param1_r[0];
-    end
-end
-
-//生成一份打拍的代码
-always @(posedge  sys_clk) begin
-    if(sys_rst)begin
         app_param2_r[0] <= 0;
+
+        app_param0_r[1] <= 0;
+        app_param1_r[1] <= 0;
         app_param2_r[1] <= 0;
     end
     else begin
+        app_param0_r[0] <= app_param0;
+        app_param1_r[0] <= app_param1;
         app_param2_r[0] <= app_param2;
+
+        app_param0_r[1] <= app_param0_r[0];
+        app_param1_r[1] <= app_param1_r[0];
         app_param2_r[1] <= app_param2_r[0];
     end
 end
 
-assign valid = app_param1_r[1][0];
-
-always @(posedge sys_clk) begin
-    if(sys_rst)begin
-        valid_r <= 0;
-    end
-    else begin
-        valid_r <= {valid_r[0],valid};
-    end
-end
-
-assign valid_pos = ~valid_r[1] && valid_r[0];
-
-//prf信号打拍
-always @(posedge sys_clk) begin
-    if(sys_rst)begin
-        prf_r <= 0;
-    end
-    else begin
-        prf_r <= {prf_r[0],prf};
-    end
-end
-
-assign prf_pos = ~prf_r[1] && prf_r[0];
-
-always @(posedge sys_clk) begin
-    if(sys_rst)
-        cnt_prf <= 0;
-    else if(valid_pos)
-        cnt_prf <= 0;
-    else if(prf_pos)begin
-        if(cnt_prf == beam_pos_num)
-            cnt_prf <= 1;
-        else
-            cnt_prf <= cnt_prf + 1;
-    end
-        
-end
+//寄存器赋值
+ assign prf_start_in        = app_param0_r[1][0];
+ assign prf_mode            = app_param0_r[1][1];
+ assign ld_mode             = app_param0_r[1][2];
+ assign send_flag_in        = app_param0_r[1][3];//打拍
+ assign single_lane         = app_param0_r[1][4];//打拍
+ assign tr_mode             = app_param0_r[1][5];
+ assign polarization_mode   = app_param0_r[1][6];
 
 
+assign valid_in         = app_param1_r[1][0];//打拍
+assign temper_req       = app_param1_r[1][1];//打拍
+assign bc_mode          = app_param1_r[1][5:2];//打拍
+assign sel_param        = app_param1_r[1][6];//打拍
+assign rst_soft         = app_param1_r[1][7];
+assign image_start      = app_param1_r[1][8];
 
-assign bram_tx_sel_en_read = 1;
-assign bram_tx_sel_addr_read = beam_pos_num == 1 ? 0 : cnt_prf -1;
+assign beam_pos_num	    = app_param2_r[1]   ;
 
+assign prf = prf_mode ? prf_pin_in : prf_rf_in;
+assign reset = sys_rst || rst_soft;
 
-    
-bc_wrapper#(
-    `ifndef G3
-    . LANE_BIT         (LANE_BIT        ),
-    . FRAME_DATA_BIT   (FRAME_DATA_BIT  ),
-    `else
-    . LANE_BIT         (LANE_BIT        ),
-    . FRAME_DATA_BIT   (FRAME_DATA_BIT  ),
-    `endif       
-    . GROUP_CHIP_NUM   (GROUP_CHIP_NUM  ),
-    . GROUP_NUM        (GROUP_NUM       ),
-    . SCLHZ            (SCLHZ           ),
-    . DATA_BIT         (DATA_BIT        ),
-    . SYSHZ            (SYSHZ           ),
-    . READ_PORT_BYTES  (READ_PORT_BYTES ),
-    . WRITE_PORT_BYTES (WRITE_PORT_BYTES),
-    . BEAM_BYTES       (BEAM_BYTES      ),
-    . CMD_BIT          (CMD_BIT         ),
-    . BEAM_NUM         (BEAM_NUM        )
+		
+
+send_data_gen#(
+    .LANE_BIT         (LANE_BIT         ),
+    .FRAME_DATA_BIT   (FRAME_DATA_BIT   ),
+    .GROUP_CHIP_NUM   (GROUP_CHIP_NUM   ),
+    .GROUP_NUM        (GROUP_NUM        ),
+    .DATA_BIT         (DATA_BIT         ),
+    .SYSHZ            (SYSHZ            ),
+    .SCLHZ            (SCLHZ            ),
+    .READ_PORT_BYTES  (READ_PORT_BYTES  ),
+    .WRITE_PORT_BYTES (WRITE_PORT_BYTES ),
+    .BEAM_BYTES       (BEAM_BYTES       ),
+    .CMD_BIT          (CMD_BIT          ),
+    .BEAM_NUM         (BEAM_NUM         )
 )
-u_bc_wrapper(
-  	.    sys_clk 	    ( sys_clk 	    )       ,
-  	.    sys_rst 	    ( sys_rst 	    )       ,
-	.    prf            ( prf           )       ,
-    .    tr_en          ( tr_en         )       ,
+u_send_data_gen(
+.  sys_clk  	        (sys_clk 	            ) ,
+.  sys_rst  	        (reset                  ) ,
+.  prf      	        (prf                    ) ,
 
-    .    sel_o_a        ( sel_o_a       )       ,
-    .    cmd_flag_a     ( cmd_flag_a    )       ,
-    .    scl_o_a        ( scl_o_a       )	    ,
-    .    sd_o_a         ( sd_o_a        )       ,
-    .    ld_o_a         ( ld_o_a        )       ,
-    .    tr_o_a         ( tr_o_a        )       ,
-    .    rst_o_a        ( rst_o_a       )       ,
+.  bc_ram_clk           (bc_ram_clk             ) ,
+.  bc_ram_en            (bc_ram_en              ) ,
+.  bc_ram_we            (bc_ram_we              ) ,
+.  bc_ram_addr          (bc_ram_addr            ) ,
+.  bc_ram_din           (bc_ram_din             ) ,
+.  bc_ram_dout          (bc_ram_dout            ) ,
+.  bc_ram_rst           (bc_ram_rst             ) ,
 
-    .    sel_o_b        ( sel_o_b       )       ,
-    .    cmd_flag_b     ( cmd_flag_b    )       ,
-    .    scl_o_b        ( scl_o_b       )	    ,
-    .    sd_o_b         ( sd_o_b        )       ,
-    .    ld_o_b         ( ld_o_b        )       ,
-    .    tr_o_b         ( tr_o_b        )       ,
-    .    rst_o_b        ( rst_o_b       )       ,
+.  delay_ram_clk        (delay_ram_clk          ) ,
+.  delay_ram_en         (delay_ram_en           ) ,
+.  delay_ram_we         (delay_ram_we           ) ,
+.  delay_ram_addr       (delay_ram_addr         ) ,
+.  delay_ram_din        (delay_ram_din          ) ,
+.  delay_ram_dout       (delay_ram_dout         ) ,
+.  delay_ram_rst        (delay_ram_rst          ) ,
 
-    .    sel_o_h        ( sel_o_h       )       ,
-    .    scl_o_h        ( scl_o_h       )	    ,
-    .    sd_o_h         ( sd_o_h        )       ,
-    .    ld_o_h         ( ld_o_h        )       ,
-    .    dary_o_h       ( dary_o_h      )       ,
-    .    trt_o_h        ( trt_o_h       )       ,
-    .    trr_o_h        ( trr_o_h       )       ,
-    .    rst_o_h        ( rst_o_h       )       ,
-    .    beam_pos_cnt   ( beam_pos_cnt  )       ,
+.  valid_in 	        (valid_in	            ) ,
+.  beam_pos_num	        (beam_pos_num           ) ,
+.  ld_mode  	        (ld_mode                ) ,
 
-	.    rama_clk       ( rama_clk      )       ,
-	.    rama_en        ( rama_en       )       ,
-	.    rama_we        ( rama_we       )       ,
-	.    rama_addr      ( rama_addr     )       ,
-	.    rama_din       ( rama_din      )       ,
-	.    rama_dout      ( rama_dout     )       ,
-	.    rama_rst       ( rama_rst      )       ,
+.  spi_done             (spi_done               ) ,
 
-    .    app_param0	    ( app_param0	)       ,
-    .    app_param1	    ( app_param1	)       ,
-    .    app_param2	    ( app_param2	)       ,
-    .    app_status0    ( app_status0   )	    ,
-    .    app_status1    ( app_status1   )	 
+.  temper_read_done     (temper_read_done       ) ,
+.  temper_en            (temper_en              ) ,
 
-); 
+.  data_in  	        (data_in  	            ) ,
+.  trig     	        (trig     	            ) ,
+.  mode  		        (mode    	            ) ,
 
 
+.  ld_o  	            (ld_o                   ) ,
+.  dary_o  	            (dary_o                 ) ,
 
-bram_tx_sel u_bram_tx_sel (
-  .clka (bram_tx_sel_clk        ),      // input wire clka
-  .ena  (bram_tx_sel_en         ),      // input wire ena
-  .wea  (bram_tx_sel_we[0]      ),      // input wire [0 : 0] wea
-  .addra(bram_tx_sel_addr >> 2  ),      // input wire [2 : 0] addra
-  .dina (bram_tx_sel_din        ),      // input wire [31 : 0] dina
-  .douta(bram_tx_sel_dout       ),      // output wire [31 : 0] douta
-  .clkb (sys_clk                ),      // input wire clkb
-  .enb  (bram_tx_sel_en_read    ),      // input wire enb
-  .web  (0                      ),      // input wire [0 : 0] web
-  .addrb(bram_tx_sel_addr_read  ),      // input wire [3 : 0] addrb
-  .dinb (0                      ),      // input wire [15 : 0] dinb
-  .doutb(bram_tx_sel_dout_read  )       // output wire [15 : 0] doutb
+.  temper_req           (temper_req             ) ,
+.  beam_pos_cnt         (beam_pos_cnt           ) 
 );
 
 
+temperature #(
+    .LANE_BIT         (LANE_BIT         ),
+    .FRAME_DATA_BIT   (FRAME_DATA_BIT   ),
+    .GROUP_CHIP_NUM   (GROUP_CHIP_NUM   ),
+    .GROUP_NUM        (GROUP_NUM        ),
+    .DATA_BIT         (DATA_BIT         ),
+    .SYSHZ            (SYSHZ            ),
+    .SCLHZ            (SCLHZ            ),
+    .READ_PORT_BYTES  (READ_PORT_BYTES  ),
+    .WRITE_PORT_BYTES (WRITE_PORT_BYTES ),
+    .BEAM_BYTES       (BEAM_BYTES       ),
+    .CMD_BIT          (CMD_BIT          ),
+    .BEAM_NUM         (BEAM_NUM         )
+)u_temperature (
+    .sys_clk                 ( sys_clk             ),
+    .reset                   ( reset               ),
+    .data_in                 ( data_in             ),
+    .trig                    ( trig                ),
+    .mode                    ( mode                ),
+    .temper_en               ( temper_en           ),
+    .sd_i                    ( sd_i                ),
+    .sel_o                   ( sel_o               ),
+    .cmd_flag                ( cmd_flag            ),
+    .scl_o                   ( scl_o               ),
+    .sd_o                    ( sd_o                ),
+    .rst_o                   ( rst_o               ),
+    .spi_done                ( spi_done            ),
+    .temper_data0            ( temper_data0        ),
+    .temper_data1            ( temper_data1        ),
+    .temper_data2            ( temper_data2        ),
+    .temper_data3            ( temper_data3        ),
+    .temper_data_valid       ( temper_data_valid   ),
+    .temper_read_done        ( temper_read_done    ),
+    .ld_o                    ( ld_o                ),
+    .dary_o                  ( dary_o              ),
+    .cnt_bit                 ( cnt_bit             )
+);
+    
 
+wave_ctrl_sig_gen#(
+    .LANE_BIT         (LANE_BIT         ),
+    .FRAME_DATA_BIT   (FRAME_DATA_BIT   ),
+    .GROUP_CHIP_NUM   (GROUP_CHIP_NUM   ),
+    .GROUP_NUM        (GROUP_NUM        ),
+    .DATA_BIT         (DATA_BIT         ),
+    .SYSHZ            (SYSHZ            ),
+    .SCLHZ            (SCLHZ            ),
+    .READ_PORT_BYTES  (READ_PORT_BYTES  ),
+    .WRITE_PORT_BYTES (WRITE_PORT_BYTES ),
+    .BEAM_BYTES       (BEAM_BYTES       ),
+    .CMD_BIT          (CMD_BIT          ),
+    .BEAM_NUM         (BEAM_NUM         )
+)
+u_wave_ctrl_sig_gen(
+. sys_clk       		(sys_clk       		),
+. reset       		    (reset              ),
+. prf    		        (prf    		    ),
+. ld_o	                (ld_o	            ),
+. send_flag_in			(send_flag_in	    ),
+. single_lane			(single_lane		),
+. tr_mode				(tr_mode			),
+. tr_en				    (tr_en				),
+. tr_en_o				(tr_en_o		    )
+);
+
+//从PS端扩充，边坡发射使能信号
+tr_en_ps u_tr_en_ps(
+. sys_clk            (sys_clk         ) ,
+. sys_rst            (sys_rst         ) ,
+. tr_en              (tr_en_o         ) ,
+. prf                (prf             ) ,
+. beam_pos_num       (beam_pos_num    ) ,
+. bram_tx_sel_clk    (bram_tx_sel_clk ) ,
+. bram_tx_sel_en     (bram_tx_sel_en  ) ,
+. bram_tx_sel_we     (bram_tx_sel_we  ) ,
+. bram_tx_sel_addr   (bram_tx_sel_addr) ,
+. bram_tx_sel_din    (bram_tx_sel_din ) ,
+. bram_tx_sel_dout   (bram_tx_sel_dout) ,
+. bram_tx_sel_rst    (bram_tx_sel_rst ) ,
+. trt_ps             (trt_ps          ) , 
+. trr_ps             (trr_ps          )  
+    );
+
+//根据bcmode扩充
 bc_txen_expand u_bc_txen_expand(
 .  sys_clk     (sys_clk     ),
-.  sys_rst     (sys_rst     ),
+.  sys_rst     (sys_rst     ),//不能被软件复位
 .  prf_in      (prf         ),
-.  trt_o       (trt_o_h     ),
-.  trr_o       (trr_o_h     ),
+.  tr_en       (tr_en_o     ),
 .  bc_mode     (bc_mode     ),
 .  sel_param   (sel_param   ),
 .  image_start (image_start ),
 
-.  BC1_TRT     (BC1_TRT    ),
-.  BC1_TRR     (BC1_TRR    ),
-.  BC2_TRT     (BC2_TRT    ),
-.  BC2_TRR     (BC2_TRR    )
-
+.  trt          (trt        ),
+.  trr          (trr        )
 );
+
+//-------------------------io_assign-----------------------------//
+wire                            sel_o_a        ;
+wire                            cmd_flag_a     ;
+wire                            scl_o_a    	   ;
+wire [GROUP_CHIP_NUM-1:0]       sd_o_a         ;
+wire                            ld_o_a         ;
+wire                            tr_o_a         ;
+wire                            rst_o_a        ;
+    
+wire                            sel_o_b        ;
+wire                            cmd_flag_b     ;
+wire                            scl_o_b    	   ;
+wire [GROUP_CHIP_NUM-1:0]       sd_o_b         ;
+wire                            ld_o_b         ;
+wire                            tr_o_b         ;
+wire                            rst_o_b        ;
+
+// wire                            sel_o_h        ;
+// wire                            scl_o_h    	   ;
+// wire [GROUP_CHIP_NUM-1:0]       sd_o_h         ;
+// wire                            ld_o_h         ;
+// wire                            dary_o_h       ;
+// wire                            tr_en_o        ;//2025/04/11 15:38 跟上面的管脚冲突，亟需处理
+// wire                            rst_o_h        ;
+
+
+
+
+//------------mimo or junke--------------------//
+assign BC1_SEL  = {4{sel_o}} ;
+assign BC1_CLK  = {4{scl_o}} ;
+assign BC1_DATA = sd_o[15:0] ;
+assign BC1_LD   = {4{ld_o}}  ;
+assign BC1_TRT  = trt[3:0]   ;//边坡为trt_ps
+assign BC1_TRR  = trr[3:0]   ;
+
+
+assign BC2_SEL  = {4{sel_o}} ;
+assign BC2_CLK  = {4{scl_o}} ;
+assign BC2_DATA = sd_o[31:16];
+assign BC2_LD   = {4{ld_o}}  ;
+assign BC2_TRT  = trt[7:4]   ;//边坡为trr_ps
+assign BC2_TRR  = trr[7:4]   ;
+
+assign BC_RST   = rst_o      ;
+
+//--------------------207sar--------------------//
+assign sel_o_a    = sel_o    ;
+assign cmd_flag_a = cmd_flag ;
+assign scl_o_a    = scl_o    ;
+assign sd_o_a     = sd_o     ;
+assign ld_o_a     = ld_o     ;
+assign tr_o_a     = tr_en_o && (~polarization_mode)     ;
+assign rst_o_a    = rst_o    ;
+
+assign sel_o_b    = sel_o    ;
+assign cmd_flag_b = cmd_flag ;
+assign scl_o_b    = scl_o    ;
+assign sd_o_b     = sd_o     ;
+assign ld_o_b     = ld_o     ;
+assign tr_o_b     = tr_en_o && polarization_mode     ;
+assign rst_o_b    = rst_o    ;
+
+//--------------------mini_sar--------------------//
+assign sel_o_h    = sel_o    ;
+assign scl_o_h    = scl_o    ;
+assign sd_o_h     = sd_o     ;
+assign dary_o_h   = dary_o   ;
+assign ld_o_h     = ld_o     ;
+assign rst_o_h    = rst_o    ;
+
 `ifdef DEBUG
     vio_new_reg u_vio_new_reg (
     .clk(sys_clk),              // input wire clk

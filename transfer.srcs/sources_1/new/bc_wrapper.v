@@ -54,8 +54,7 @@ module bc_wrapper#(
     output [GROUP_CHIP_NUM-1:0]       sd_o_h         ,
     output                            ld_o_h         ,
     output                            dary_o_h       ,
-    output                            trt_o_h        ,
-    output                            trr_o_h        ,
+    output                            tr_en_o           ,
     output                            rst_o_h        ,
 
     output [23:0]                     beam_pos_cnt   ,
@@ -79,21 +78,6 @@ module bc_wrapper#(
 
 
 wire reset;//复位,包含了sys_rst、valid_pos、reset_sof
-
-	// wire sys_clk_bufg,sys_clk;
-//    IBUFDS IBUFDS_inst (
-//       .O(sys_clk_bufg),   // 1-bit output: Buffer output
-//       .I(sys_clk_P),   // 1-bit input: Diff_p buffer input (connect directly to top-level port)
-//       .IB(sys_clk_n)  // 1-bit input: Diff_n buffer input (connect directly to top-level port)
-//    );
-//     BUFG BUFG_inst (
-//     .O(sys_clk), // 1-bit output: Clock output
-//     .I(sys_clk_bufg)  // 1-bit input: Clock input
-//    );
-
-//data_in
-
-
 
 //-------------------wire declare----------------------//
 //spi
@@ -131,7 +115,6 @@ wire                       bc_group_send_done   ;//一个组发送完，而不�
 wire                       ld_done              ;
 wire                       now_beam_send_done   ;
 wire [31:0] 			   app_param3	        ;
-// wire [31:0] 			   app_status0	 ;
 
 wire rd_done = 0;
 
@@ -141,7 +124,6 @@ wire                       cmd_flag      ;
 wire [GROUP_CHIP_NUM-1:0]  sd_o          ;
 wire                       dary_o        ;
 wire                       ld_o          ;
-wire                       tr_o          ;
 wire                       trt_o         ;
 wire                       trr_o         ;
 wire                       rst_o         ;
@@ -234,21 +216,8 @@ end
     assign reset_sof    = app_param1_r[1][7];
 
     assign beam_pos_num	= app_param2_r[1]   ;
-	//cpu_i_gen
-	assign app_status0          = `ID_NUM;
-    assign app_status1          = {31'b0,temper_data_valid};
 
 
-//---------已经不起作用了,可随时删除，暂留以备后续
-cpu_ctrl_sig_gen u_cpu_ctrl_sig_gen(
-. sys_rst       (reset        ) ,
-. sys_clk       (sys_clk      ) ,
-. prf        (prf       ) ,
-. valid_in      (valid_in     ) ,
-. rd_done       (rd_done      ) ,
-. cpu_dat_sd_en (cpu_dat_sd_en) ,
-. data_sending  (data_sending ) 
-);
 
 wave_ctrl_sig_gen#(
     .LANE_BIT         (LANE_BIT         ),
@@ -273,9 +242,7 @@ u_wave_ctrl_sig_gen(
 . single_lane			(single_lane		),
 . tr_mode				(tr_mode			),
 . tr_en				    (tr_en				),
-. tr_o				    (tr_o				),
-. trt_o				    (trt_o				),
-. trr_o				    (trr_o				)
+. tr_en_o				    (tr_en_o				)
 );
 		
 
@@ -366,44 +333,37 @@ temperature #(
     .temper_read_done        ( temper_read_done    ),
     .ld_o                    ( ld_o                ),
     .dary_o                  ( dary_o              ),
-    .tr_o                    ( tr_o                ),
     .cnt_bit                 ( cnt_bit             )
 );
 
 
+assign sel_o_a    = sel_o    ;
+assign cmd_flag_a = cmd_flag ;
+assign scl_o_a    = scl_o    ;
+assign sd_o_a     = sd_o     ;
+assign ld_o_a     = ld_o     ;
+assign tr_o_a     = tr_en_o && (~polarization_mode)     ;
+assign rst_o_a    = rst_o    ;
 
+assign sel_o_b    = sel_o    ;
+assign cmd_flag_b = cmd_flag ;
+assign scl_o_b    = scl_o    ;
+assign sd_o_b     = sd_o     ;
+assign ld_o_b     = ld_o     ;
+assign tr_o_b     = tr_en_o && polarization_mode     ;
+assign rst_o_b    = rst_o    ;
 
+assign sel_o_h    = sel_o    ;
+assign scl_o_h    = scl_o    ;
+assign sd_o_h     = sd_o     ;
+assign dary_o_h   = dary_o   ;
+assign ld_o_h     = ld_o     ;
+assign rst_o_h    = rst_o    ;
+assign reset = sys_rst || reset_sof;
 
-
-// localparam DWIDTH = 100;
-// reg [DWIDTH-1:0] CFGBC_OUTEN_r = 0;
-// always@(posedge sys_clk)begin
-//     if(sys_rst)
-//         CFGBC_OUTEN_r <= 0;
-//     else
-// 	    CFGBC_OUTEN_r <= {CFGBC_OUTEN_r[DWIDTH-2:0], tr_o};
-// end
-// wire trt_cap;
-// assign BC_A_TXD[0] = tr_o;
 `ifdef DEBUG
 wire [31:0] sd;
 assign sd = sd_o;
-// reg [7:0] cnt_bp;
-// reg sel_o_r;
-// wire sel_o_pos;
-// always @(posedge sys_clk) begin
-//     sel_o_r <= sel_o;
-// end
-// assign sel_o_pos = sel_o && (~sel_o_r);
-// always @(posedge sys_clk) begin
-//     if (reset) begin
-//         cnt_bp <= 0;
-//     end else if (sel_o_pos) begin
-//         if(cnt_bp == beam_pos_cnt)
-//         cnt_bp <= cnt_bp + 1;
-//     end
-//     else
-// end
 ila_spi_bc_code u_ila_spi_bc_code (
 	.clk	        (sys_clk	  ),// 
 	.probe0	        (PLUART_txd	  ),//1  
@@ -417,7 +377,7 @@ ila_spi_bc_code u_ila_spi_bc_code (
     .probe8         (trt_o        ),//1 
     .probe9         (trr_o        ),//1 
     .probe10        (prf          ),//1 
-    .probe11        (tr_o         ),//1 
+    .probe11        (tr_en_o         ),//1 
     .probe12        (cnt_bit      ),//32 
     .probe13        (beam_pos_cnt[7:0]) //8
 );
@@ -444,46 +404,5 @@ vio_ctrl_reg u_vio_ctrl_reg (
 
 `endif
 
-    // assign BC_A_CLK    = scl_o;
-    // assign BC_A_CS     = sel_o;
-    // assign BC_A_LATCH  = ld_o;
-    // // assign BC_A_RXD    = ld_o;
-    // assign BC_A_RXEN   = cmd_flag;
-    // assign BC_A_TXD    = sd_o;
-    // assign BC_A_TXEN   = tr_o;
 
-    // assign BC_B_CLK    = scl_o;
-    // assign BC_B_CS     = sel_o;
-    // assign BC_B_LATCH  = ld_o;
-    // // assign BC_A_RXD    = ld_o;
-    // assign BC_B_RXEN   = cmd_flag;
-    // assign BC_B_TXD    = sd_o;
-    // assign BC_B_TXEN   = tr_o;
-
-
-    assign sel_o_a    = sel_o    ;
-    assign cmd_flag_a = cmd_flag ;
-    assign scl_o_a    = scl_o    ;
-    assign sd_o_a     = sd_o     ;
-    assign ld_o_a     = ld_o     ;
-    assign tr_o_a     = tr_o && (~polarization_mode)     ;
-    assign rst_o_a    = rst_o    ;
-
-    assign sel_o_b    = sel_o    ;
-    assign cmd_flag_b = cmd_flag ;
-    assign scl_o_b    = scl_o    ;
-    assign sd_o_b     = sd_o     ;
-    assign ld_o_b     = ld_o     ;
-    assign tr_o_b     = tr_o && polarization_mode     ;
-    assign rst_o_b    = rst_o    ;
-
-    assign sel_o_h    = sel_o    ;
-    assign scl_o_h    = scl_o    ;
-    assign sd_o_h     = sd_o     ;
-    assign dary_o_h   = dary_o   ;
-    assign ld_o_h     = ld_o     ;
-    assign trt_o_h    = trt_o    ;
-    assign trr_o_h    = trr_o    ;
-    assign rst_o_h    = rst_o    ;
-assign reset = sys_rst || reset_sof;
 endmodule

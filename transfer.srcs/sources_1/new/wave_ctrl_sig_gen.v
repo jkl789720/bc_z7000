@@ -23,9 +23,7 @@ input  send_flag_in			,
 input  single_lane			,
 input  tr_mode				,
 input  tr_en				,
-output tr_o					,
-output trt_o				,
-output trr_o					
+output tr_en_o					
 // output tr_in          //根据prf信号内部自己产生
     );
 
@@ -100,11 +98,11 @@ always@(posedge sys_clk)begin
         data_valid <= 1;
 end
 
-// wire tr_o;
+// wire tr_en_o;
 //单波位的单通道以及多波位都是脉冲 单波位单通道是长拉高
 wire tr_o_local;
 assign tr_o_local = data_valid && (single_lane ? tr_single : tr_other);
-// assign tr_o = 1;
+// assign tr_en_o = 1;
 
 reg [2:0] tr_en_r;
 wire tr_en_pos;
@@ -133,19 +131,9 @@ wire tr_max;
 assign tr_max = (single_lane) ? 1 : (cnt_close <= 5000 - 1);
 assign tr_o_input = tr_max && tr_en_r[1];
 
-assign tr_o = tr_mode ? tr_o_input: tr_o_local;
+assign tr_en_o = tr_mode ? tr_o_input: tr_o_local;
 
 
-localparam DWIDTH = 20;
-reg [DWIDTH:0] CFGBC_OUTEN_r = 0;
-always@(posedge sys_clk)begin
-    if(reset)
-        CFGBC_OUTEN_r <= 0;
-    else
-	    CFGBC_OUTEN_r <= {CFGBC_OUTEN_r[DWIDTH-1:0], tr_o};
-end
 
-assign trt_o = CFGBC_OUTEN_r[DWIDTH/2];
-assign trr_o = |CFGBC_OUTEN_r;
 
 endmodule

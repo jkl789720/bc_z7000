@@ -22,8 +22,9 @@ module send_data_gen#(
 (
 input                       sys_clk                     ,
 input                       sys_rst                     ,
+input                       prf                         ,
 //---------------wr_data_in----------------//
-
+//BC_CODE
 input                       bc_ram_clk                  ,
 input                       bc_ram_en                   ,
 input   [3:0]               bc_ram_we                   ,
@@ -31,7 +32,7 @@ input   [31:0]              bc_ram_addr                 ,
 input   [31:0]              bc_ram_din                  ,
 output  [31:0]              bc_ram_dout                 ,
 input                       bc_ram_rst                  ,
-
+//DELAY_VALUE
 input                       delay_ram_clk               ,
 input                       delay_ram_en                ,
 input  [3:0]                delay_ram_we                ,
@@ -43,20 +44,25 @@ input                       delay_ram_rst               ,
 //控制信号
 input                       valid_in                    ,
 input   [31:0]              beam_pos_num                ,
-input                       prf                      ,
+input                       ld_mode                     ,
 
-//数据信号
+//当前组发送完成
+input                       spi_done                    ,
+
+//温度相关
+input                       temper_read_done            ,
+input                       temper_req                  ,
+
+//spi模块触发信号
 output reg [DATA_BIT-1:0]   data_in                     ,
 output reg                  trig                        ,
 output reg                  mode                        ,
-input                       bc_group_send_done          ,
-output reg                  now_beam_send_done          ,
-input                       ld_mode                  ,
+
 output reg                  ld_o                        ,
 output reg                  dary_o                      ,
+
 output reg                  temper_en                   ,
-input                       temper_read_done            ,
-input                       temper_req                  ,
+
 output reg [23:0]           beam_pos_cnt                       
 );
 
@@ -164,8 +170,12 @@ localparam WHETHER_READ_TEMPERATURE     = 5'd17 ;
 //---------------------状态切换相关变量定义-------------------------------//
 // reg cmd_send_done,data_send_done;
 // reg now_beam_get_done;
+wire  now_group_send_done;
+reg  now_beam_send_done;
 wire group_data_get_done;
 reg  ld_done;
+
+assign now_group_send_done = spi_done;
 
 wire [63:0] ns_value_0,ns_value_1,time_1us,time_xus;
 assign ns_value_0 = 1200;
@@ -258,21 +268,6 @@ generate
     end
 endgenerate
 
-//-----------------------addr_ctrl---------------------------//
-// always@(posedge sys_clk)begin
-//     if(sys_rst)
-//         beam_pos_cnt <= 0;
-//     else if(valid_pos && beam_pos_num > 1)
-//         beam_pos_cnt <= 0;
-//     else if(end_now_beam)begin
-//         if(beam_pos_cnt >= beam_pos_num - 1)
-//             beam_pos_cnt <= 0;
-//         else
-//             beam_pos_cnt <= beam_pos_cnt + 1;
-//     end
-// end
-
-// assign beam_pos_cnt = beam_pos_cnt_temp - 1   ;
 
 //注意检测
 localparam OFFSET_SHIFT = $clog2(READ_PORT_BYTES);
@@ -346,7 +341,7 @@ always@(*)begin
                 n_state = SEND_CMD;
             end
             SEND_CMD :begin
-                if(bc_group_send_done)
+                if(now_group_send_done)
                     n_state = DELAY1;
                 else
                     n_state = c_state;
@@ -364,7 +359,7 @@ always@(*)begin
                     n_state = c_state;
             end
             SEND_GROUP_DATA :begin
-                if(bc_group_send_done)
+                if(now_group_send_done)
                     n_state = DELAY2;
                 else
                     n_state = c_state;
@@ -389,14 +384,6 @@ always@(*)begin
                 else
                     n_state = c_state;
             end
-            // WAIT_DARY :begin
-            //     if(ld_mode_v == 0)
-            //         n_state = SEND_DARY;
-            //     else if(prf_pos)
-            //         n_state = SEND_DARY;
-            //     else
-            //         n_state = c_state;
-            // end
             SEND_DARY :begin
                 if(cnt_ld == time_1us - 1)
                     n_state = WAIT_LD;

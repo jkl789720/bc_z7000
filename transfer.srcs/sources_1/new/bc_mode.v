@@ -1,11 +1,13 @@
-module bc_mode(
+module bc_mode#(
+    parameter DWIDTH        = 20  ,
+    parameter EXPAND_PERIOD = 5
+)(
 input       sys_clk    ,
 input       sys_rst    ,
 
 input       prf_in     ,       
 
-input       trt_o      ,
-input       trr_o      ,
+input       tr_en      ,
 
 input [3:0] bc_mode    ,
 input       sel_param  ,
@@ -23,7 +25,46 @@ output reg  trt_o_p_3  ,//h1
 output reg  trr_o_p_3   //h1
 
 );
+wire    complement_signal;
+reg  [2:0] tr_en_r;
+wire    tr_en_neg;
+wire    tr_expand;
 
+wire trt_o;
+wire trr_o;
+reg [31:0] cnt_width;
+
+//---------------------展宽------------------------------//
+
+always @(posedge sys_clk) begin
+    tr_en_r <= {tr_en_r[1:0],tr_en};
+end
+assign tr_en_neg = tr_en_r[2] &&  (~tr_en_r[1]);
+always@(posedge sys_clk)begin
+    if(sys_rst)
+        cnt_width <= EXPAND_PERIOD - 1;
+    else if(tr_en_neg)
+        cnt_width <= 0;
+    else if(cnt_width == EXPAND_PERIOD - 1)
+        cnt_width <= cnt_width;
+    else 
+        cnt_width <= cnt_width + 1;
+end
+assign complement_signal = (cnt_width < EXPAND_PERIOD - 1)| tr_en_neg;//
+assign tr_expand = complement_signal | tr_en_r[1];
+
+//移位
+reg [DWIDTH:0] CFGBC_OUTEN_r = 0;
+always@(posedge sys_clk)begin
+    if(sys_rst)
+        CFGBC_OUTEN_r <= 0;
+    else
+	    CFGBC_OUTEN_r <= {CFGBC_OUTEN_r[DWIDTH-1:0], tr_expand};
+end
+
+assign trt_o = CFGBC_OUTEN_r[DWIDTH/2];
+assign trr_o = |CFGBC_OUTEN_r;
+//----------------------------------//
 reg [2:0] prf_dff;
 wire prf_pos;
 always@(posedge sys_clk)begin

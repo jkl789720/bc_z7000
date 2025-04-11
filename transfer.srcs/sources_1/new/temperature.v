@@ -29,7 +29,7 @@ output reg                          cmd_flag                     ,
 output reg                          scl_o                        ,
 output reg [GROUP_CHIP_NUM-1:0]     sd_o                         ,
 output                              rst_o                        ,
-output reg                          bc_group_send_done                 ,
+output reg                          spi_done                 ,
 
 input                               temper_en                    ,
 output     [7:0]                    temper_data0                 ,
@@ -42,7 +42,6 @@ output                              temper_read_done             ,
 input      [GROUP_CHIP_NUM-1:0]     sd_i                         ,
 input                               ld_o                         ,
 input                               dary_o                       ,
-input                               tr_o                         ,
 output reg [31:0]                   cnt_bit
 );
 
@@ -472,11 +471,11 @@ assign temper_read_done = mode_change1_done;
 
 always@(posedge sys_clk)begin
     if(reset)
-        bc_group_send_done <= 0;
+        spi_done <= 0;
     else if(end_cnt_bit && c_state == BC_SEND)
-        bc_group_send_done <= 1;
+        spi_done <= 1;
     else 
-        bc_group_send_done <= 0;
+        spi_done <= 0;
 end
 
 //上电给芯片复位
