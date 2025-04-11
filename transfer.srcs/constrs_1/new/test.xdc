@@ -121,3 +121,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports {bc_data_done}   ]
 
 
 
+##test
+set_property PACKAGE_PIN W10  [get_ports valid        ]
+set_property PACKAGE_PIN T5  [get_ports tr_en_o      ]
+set_property PACKAGE_PIN U5  [get_ports bc_data_done_o      ]
+set_property IOSTANDARD LVCMOS33 [get_ports valid   ]
+set_property IOSTANDARD LVCMOS33 [get_ports tr_en_o     ]
+set_property IOSTANDARD LVCMOS33 [get_ports bc_data_done_o     ]

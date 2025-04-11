@@ -57,7 +57,6 @@ output reg                  dary_o                      ,
 output reg                  temper_en                   ,
 input                       temper_read_done            ,
 input                       temper_req                  ,
-output                      reset                       ,
 output reg [23:0]           beam_pos_cnt                       
 );
 
@@ -93,7 +92,6 @@ reg now_beam_get_done;
 //-----------------valid打两拍降低亚稳态------------------//
 reg [2:0] valid_r;
 wire valid_pos;//打两拍再检测上升沿
-reg valid_pos_r0=0;
 always@(posedge sys_clk)begin
     if(sys_rst)
         valid_r <= 0;
@@ -101,13 +99,11 @@ always@(posedge sys_clk)begin
         valid_r <= {valid_r[1:0],valid_in};
 end
 assign valid_pos = ~valid_r[2] && valid_r[1]; 
-always@(posedge sys_clk) valid_pos_r0 <= valid_pos;
-assign reset = sys_rst | valid_pos;
 //-----------------检测prf信号上升沿------------------//
 reg [2:0] prf_r;//打两拍再检测上升沿
 wire prf_pos;
 always@(posedge sys_clk)begin
-    if(reset)
+    if(sys_rst)
         prf_r <= 0;
     else 
         prf_r <= {prf_r[1:0],prf};
@@ -117,7 +113,7 @@ assign prf_pos = ~prf_r[2] && prf_r[1];
 reg [1:0] ld_mode_r;
 wire ld_mode_v;
 always@(posedge sys_clk)begin
-    if(reset)
+    if(sys_rst)
         ld_mode_r <= 0;
     else 
         ld_mode_r <= {ld_mode_r[0],ld_mode};
@@ -188,7 +184,7 @@ assign delay_valve = 'd25;
 wire get_req,get_start_flag;
 reg get_ready;
 always@(posedge sys_clk)begin
-    if(reset)
+    if(sys_rst)
         get_ready <= 1;
     else if(get_start_flag && get_ready)
         get_ready <= 0;
@@ -211,7 +207,7 @@ wire               end_group_rd_cnt;
 assign add_rd_cnt = rd_en;
 assign end_group_rd_cnt = add_rd_cnt && rd_cnt[$clog2(GROUP_CHIP_NUM)-1:0] == GROUP_CHIP_NUM - 1;
 always@(posedge sys_clk)begin
-    if(reset)
+    if(sys_rst)
         rd_en <= 0;
     else if(get_start_flag)
         rd_en <= 1;
@@ -219,7 +215,7 @@ always@(posedge sys_clk)begin
         rd_en <= 0;
 end
 always@(posedge sys_clk)begin
-    if(reset)
+    if(sys_rst)
          rd_cnt <= 0;
     else if(add_rd_cnt)begin
         if(end_now_beam)
@@ -230,14 +226,14 @@ always@(posedge sys_clk)begin
 end
 
 always@(posedge sys_clk)begin
-    if(reset)
+    if(sys_rst)
         rd_cnt_r0 <= 0;
     else 
         rd_cnt_r0 <= rd_cnt;
 end
 
 always@(posedge sys_clk)begin
-    if(reset)
+    if(sys_rst)
         rd_en_r0 <= 0;
     else 
         rd_en_r0 <= rd_en;
@@ -245,7 +241,7 @@ end
 
 integer j;
 always@(posedge sys_clk)begin
-    if(reset)begin
+    if(sys_rst)begin
         for(j = 0; j < 16; j = j + 1)
             data_buff[j] <= 0;
     end
@@ -264,7 +260,7 @@ endgenerate
 
 //-----------------------addr_ctrl---------------------------//
 // always@(posedge sys_clk)begin
-//     if(reset)
+//     if(sys_rst)
 //         beam_pos_cnt <= 0;
 //     else if(valid_pos && beam_pos_num > 1)
 //         beam_pos_cnt <= 0;
@@ -309,26 +305,26 @@ assign cmd_value = {rd_delay_data,delay_en,group_id};
 
 //----------------------------------状态机------------------------------------//
 always@(posedge sys_clk)begin
-    if(reset)
+    if(sys_rst)
         c_state <= IDLE;
     else
         c_state <= n_state;
 end
 always@(*)begin
-    if(reset)
+    if(sys_rst)
         n_state = IDLE;
     else begin
         case (c_state)
             `ifdef SAR
                 IDLE:begin
-                    if(valid_pos_r0)//由于时序对齐的原因用打一拍后的信号
+                    if(valid_pos)//由于时序对齐的原因用打一拍后的信号
                         n_state = ARBITRATE0;
                     else
                         n_state = c_state;
                 end 
             `else 
                 IDLE:begin
-                    if(valid_pos_r0)//由于时序对齐的原因用打一拍后的信号
+                    if(valid_pos)//由于时序对齐的原因用打一拍后的信号
                         n_state = CMD_GEN;
                     else
                         n_state = c_state;
@@ -452,7 +448,7 @@ always@(*)begin
 end
 
 always@(posedge sys_clk)begin
-    if(reset)begin
+    if(sys_rst)begin
         now_beam_get_done  <= 0;
         data_in            <= 0;
         trig               <= 0;
@@ -607,10 +603,17 @@ bram_delay u_bram_delay (
   .rstb         (0                  )
 );
 
+ila_z7ps_bccode_bram_r u_ila_z7ps_bccode_bram_r (
+	.clk       (sys_clk     ), //
+	.probe0    (rd_en       ), //
+	.probe1    (rd_addr     ), //32
+	.probe2    (rd_data     )  //128 
+);
+
 //------------------------调试信号
 
 always@(posedge sys_clk)begin
-    if(reset)
+    if(sys_rst)
         cnt <= 0;
     else if(flag)
         cnt <= cnt + 1;

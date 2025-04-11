@@ -126,9 +126,13 @@ wire [31:0] beam_pos_num;
 wire [3:0] bc_mode;
 wire sel_param;
 wire image_start;
+wire rst_sof;
+wire reset;
+assign reset = sys_rst || rst_sof;
 
 assign bc_mode = app_param1_r[1][5:2];
 assign sel_param = app_param1_r[1][6];
+assign rst_sof = app_param1_r[1][7];
 assign image_start = app_param1_r[1][8];
 
 assign beam_pos_num = app_param2_r[1][31:0];
@@ -376,7 +380,12 @@ bc_txen_expand u_bc_txen_expand(
         .probe12    (BC2_TRT[2] ), // input wire [0:0]  probe4 
         .probe13    (BC2_TRR[2] ), // input wire [0:0]  probe5 
         .probe14    (BC2_TRT[3] ), // input wire [0:0]  probe6 
-        .probe15    (BC2_TRR[3] ) // input wire [0:0]  probe7
+        .probe15    (BC2_TRR[3] ), // input wire [0:0]  probe7
+        .probe16    (prf), // input wire [0:0]  probe7
+        .probe17    (tr_en), // input wire [0:0]  probe7
+        .probe18    (bc_mode), // input wire [3:0]  probe7
+        .probe19    (image_start), // input wire [0:0]  probe7
+        .probe20    (sys_rst) // input wire [0:0]  probe7
     );
 `endif
 endmodule

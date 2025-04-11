@@ -56,4 +56,15 @@ module check_spi_to_bram_top#(
         .done     (done)
     );
 
+    ila_check_back_spi u_u_ila_check_back_spi (
+        .clk(clk), // input wire clk
+    
+    
+        .probe0(spi_clk         ),//32
+        .probe1(spi_cs_n        ),//32
+        .probe2(spi_mosi        ),//32
+        .probe3(beam_pos_num    ),//32
+        .probe4(rx_data[31:0]   ) //32
+    );
+
 endmodule

@@ -295,7 +295,7 @@ send_data_gen#(
 )
 u_send_data_gen(
 .  sys_clk  	        (sys_clk 	            ) ,
-.  sys_rst  	        (sys_rst | reset_sof    ) ,
+.  sys_rst  	        (reset                  ) ,
 
 .  bc_ram_clk           (bc_ram_clk             ) ,
 .  bc_ram_en            (bc_ram_en              ) ,
@@ -327,7 +327,6 @@ u_send_data_gen(
 .  temper_en            (temper_en              ) ,
 .  temper_read_done     (temper_read_done       ) ,
 .  temper_req           (temper_req             ) ,
-.  reset                (reset                  ) ,
 .  beam_pos_cnt         (beam_pos_cnt           ) 
 );
 
@@ -389,7 +388,22 @@ temperature #(
 `ifdef DEBUG
 wire [31:0] sd;
 assign sd = sd_o;
-
+// reg [7:0] cnt_bp;
+// reg sel_o_r;
+// wire sel_o_pos;
+// always @(posedge sys_clk) begin
+//     sel_o_r <= sel_o;
+// end
+// assign sel_o_pos = sel_o && (~sel_o_r);
+// always @(posedge sys_clk) begin
+//     if (reset) begin
+//         cnt_bp <= 0;
+//     end else if (sel_o_pos) begin
+//         if(cnt_bp == beam_pos_cnt)
+//         cnt_bp <= cnt_bp + 1;
+//     end
+//     else
+// end
 ila_spi_bc_code u_ila_spi_bc_code (
 	.clk	        (sys_clk	  ),// 
 	.probe0	        (PLUART_txd	  ),//1  
@@ -404,8 +418,11 @@ ila_spi_bc_code u_ila_spi_bc_code (
     .probe9         (trr_o        ),//1 
     .probe10        (prf          ),//1 
     .probe11        (tr_o         ),//1 
-    .probe12        (cnt_bit      )//32 
+    .probe12        (cnt_bit      ),//32 
+    .probe13        (beam_pos_cnt[7:0]) //8
 );
+
+
 
 
 vio_ctrl_reg u_vio_ctrl_reg (
@@ -468,5 +485,5 @@ vio_ctrl_reg u_vio_ctrl_reg (
     assign trt_o_h    = trt_o    ;
     assign trr_o_h    = trr_o    ;
     assign rst_o_h    = rst_o    ;
-
+assign reset = sys_rst || reset_sof;
 endmodule

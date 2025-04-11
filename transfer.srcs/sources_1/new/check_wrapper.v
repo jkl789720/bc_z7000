@@ -20,7 +20,7 @@ module check_wrapper#(
 );
 
 wire          bram_we     ;
-wire [31:0]   bram_addr   ;
+wire [10:0]   bram_addr   ;
 wire [31:0]   bram_data   ;
 wire          done        ;
 
@@ -55,6 +55,16 @@ check_spi_to_bram_top#(
     . bram_addr (bram_addr),
     . bram_data (bram_data),
     . done      (done     )
+);
+
+ila_check_back_ram_w u_u_ila_check_back_ram_w (
+	.clk(clk), // input wire clk
+
+
+	.probe0(bram_we     ),//1
+	.probe1(bram_addr   ),//32
+	.probe2(bram_data   ),//32
+	.probe3(done        ) //1
 );
 
 /*
