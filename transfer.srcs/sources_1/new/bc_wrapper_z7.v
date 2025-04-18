@@ -97,6 +97,7 @@ wire [3:0]                 bc_mode          ;
 wire                       valid_in         ;
 
 wire [31:0]                beam_pos_num     ;
+wire [15:0]                receive_period   ;
 
 wire                       temper_ready     ;
 wire                       temper_en        ;
@@ -229,6 +230,7 @@ assign bc_mode          = app_param1_r[1][5:2];//打拍
 assign sel_param        = app_param1_r[1][6];//打拍
 assign rst_soft         = app_param1_r[1][7];
 assign image_start      = app_param1_r[1][8];
+assign receive_period      = app_param1_r[1][31:16];
 
 assign beam_pos_num	    = app_param2_r[1]   ;
 
@@ -366,6 +368,7 @@ tr_en_ps u_tr_en_ps(
 . tr_en              (tr_en_o         ) ,
 . prf                (prf             ) ,
 . beam_pos_num       (beam_pos_num    ) ,
+. receive_period       (receive_period    ) ,
 . bram_tx_sel_clk    (bram_tx_sel_clk ) ,
 . bram_tx_sel_en     (bram_tx_sel_en  ) ,
 . bram_tx_sel_we     (bram_tx_sel_we  ) ,
@@ -386,6 +389,7 @@ bc_txen_expand u_bc_txen_expand(
 .  bc_mode     (bc_mode     ),
 .  sel_param   (sel_param   ),
 .  image_start (image_start ),
+.  receive_period (receive_period ),
 
 .  trt          (trt        ),
 .  trr          (trr        )
@@ -424,7 +428,7 @@ assign BC1_SEL  = {4{sel_o}} ;
 assign BC1_CLK  = {4{scl_o}} ;
 assign BC1_DATA = sd_o[15:0] ;
 assign BC1_LD   = {4{ld_o}}  ;
-assign BC1_TRT  = trt[3:0]   ;//边坡为trt_ps
+assign BC1_TRT  = trt[3:0]   ;//边坡为 trt_ps junke为 trt
 assign BC1_TRR  = trr[3:0]   ;
 
 
@@ -432,7 +436,7 @@ assign BC2_SEL  = {4{sel_o}} ;
 assign BC2_CLK  = {4{scl_o}} ;
 assign BC2_DATA = sd_o[31:16];
 assign BC2_LD   = {4{ld_o}}  ;
-assign BC2_TRT  = trt[7:4]   ;//边坡为trr_ps
+assign BC2_TRT  = trt[7:4]   ;//边坡为 trt_ps junke为 trt
 assign BC2_TRR  = trr[7:4]   ;
 
 assign BC_RST   = rst_o      ;
@@ -462,7 +466,7 @@ assign dary_o_h   = dary_o   ;
 assign ld_o_h     = ld_o     ;
 assign rst_o_h    = rst_o    ;
 
-`ifdef DEBUG
+// `ifdef DEBUG
     vio_new_reg u_vio_new_reg (
     .clk(sys_clk),              // input wire clk
     .probe_in0(bc_mode),  // input wire [3 : 0] probe_in0
@@ -496,5 +500,43 @@ assign rst_o_h    = rst_o    ;
         .probe19    (image_start), // input wire [0:0]  probe7
         .probe20    (sys_rst) // input wire [0:0]  probe7
     );
-`endif
+    wire [31:0] sd;
+    assign sd = sd_o;
+    ila_spi_bc_code u_ila_spi_bc_code (
+        .clk	        (sys_clk	      ),// 
+        .probe0	        (PLUART_txd	      ),//1  
+        .probe1	        (PLUART_rxd	      ),//1 
+        .probe2         (sd               ),//32
+        .probe3         (sel_o            ),//1 
+        .probe4         (cmd_flag         ),//1 
+        .probe5         (scl_o            ),//1 
+        .probe6         (dary_o           ),//1 
+        .probe7         (ld_o             ),//1 
+        .probe8         (prf              ),//1 
+        .probe9         (tr_en_o          ),//1 
+        .probe10        (cnt_bit          ),//32 
+        .probe11        (beam_pos_cnt[7:0]) //8
+    );
+    
+    
+    
+    
+    vio_ctrl_reg u_vio_ctrl_reg (
+    .clk          (sys_clk 	            ),//
+    .probe_in0    (prf_mode             ),//1 
+    .probe_in1    (ld_mode              ),//1 
+    .probe_in2    (send_flag_in         ),//1 
+    .probe_in3    (valid_in             ),//1 
+    .probe_in4    (beam_pos_num         ),//32
+    .probe_in5    (single_lane          ),//1
+    .probe_in6    (prf_start_in         ),//1
+    .probe_in7    (tr_mode              ),//1
+    .probe_in8    (polarization_mode    ),//1
+    .probe_in9    (temper_req           ),//1
+    .probe_in10   (bc_mode              ),//1
+    .probe_in11   (sel_param            ),//1
+    .probe_in12   (reset_sof            ) //1
+    );
+    
+// `endif
 endmodule

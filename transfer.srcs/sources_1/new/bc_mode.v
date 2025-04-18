@@ -1,5 +1,5 @@
 module bc_mode#(
-    parameter DWIDTH        = 20  ,
+    parameter DWIDTH        = 4  ,
     parameter EXPAND_PERIOD = 5
 )(
 input       sys_clk    ,
@@ -14,6 +14,8 @@ input       sel_param  ,
 
 input       image_start,
 
+input [15:0] receive_period,
+
 
 output reg  trt_o_p_0  ,//v0
 output reg  trr_o_p_0  ,//v0
@@ -26,12 +28,25 @@ output reg  trr_o_p_3   //h1
 
 );
 wire    complement_signal;
+
 reg  [2:0] tr_en_r;
 wire    tr_en_neg;
 wire    tr_expand;
 
-wire trt_o;
+wire    trt_temp;
+reg     trt_temp_r;
+wire    trt_temp_neg;
+
+wire    trr_temp;
+reg     trr_temp_r;
+wire    trr_temp_neg;
+
+reg trt_o;
 wire trr_o;
+
+reg [15:0] cnt_receive;
+wire    idle_flag;
+
 reg [31:0] cnt_width;
 
 //---------------------展宽------------------------------//
@@ -62,8 +77,42 @@ always@(posedge sys_clk)begin
 	    CFGBC_OUTEN_r <= {CFGBC_OUTEN_r[DWIDTH-1:0], tr_expand};
 end
 
-assign trt_o = CFGBC_OUTEN_r[DWIDTH/2];
-assign trr_o = |CFGBC_OUTEN_r;
+assign trt_temp = CFGBC_OUTEN_r[DWIDTH/2];
+assign trr_temp = |CFGBC_OUTEN_r;
+
+
+//关闭tr芯片（使其处于负载态）
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        trt_o <= 1;
+    else if(idle_flag)
+        trt_o <= 1;
+    else if(trt_temp_neg)
+        trt_o <= 0;
+    else 
+        trt_o <= trt_o;
+end
+assign trr_o = trr_temp;
+
+//生成trt_temp_neg
+always@(posedge sys_clk)trt_temp_r <= trt_temp;
+assign trt_temp_neg = trt_temp_r && (~trt_temp);
+
+//生成trr_temp_neg
+always@(posedge sys_clk)trr_temp_r <= trr_temp;
+assign trr_temp_neg = trr_temp_r && (~trr_temp);
+//接收计时
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        cnt_receive <= 16'hffff;
+    else if(trr_temp_neg)
+        cnt_receive <= 0;
+    else if(cnt_receive == receive_period - 1)
+        cnt_receive <= cnt_receive;
+    else 
+        cnt_receive <= cnt_receive + 1;
+end
+assign idle_flag = cnt_receive == receive_period - 2;
 //----------------------------------//
 reg [2:0] prf_dff;
 wire prf_pos;

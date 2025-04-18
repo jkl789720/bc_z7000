@@ -5,6 +5,7 @@ input           sys_rst         ,
 input           tr_en           ,
 input           prf             ,
 input           beam_pos_num    ,
+input [15:0]    receive_period    ,
 //权限
 input           bram_tx_sel_clk ,
 input           bram_tx_sel_en  ,
@@ -24,23 +25,26 @@ reg [1:0] prf_r;
 wire prf_pos;
 reg [7:0] cnt_prf;
 
-wire valid;
-reg [1:0] valid_r;
-wire valid_pos;
 
 wire [7:0] tx_sel;//选择对应bit作为发射通道，为1作为发射，发射使能来了就发射，否则作为接收
-wire [7:0] tr_en_up;//通过ps端控制得到的tr_en，边坡如此
 
-wire trt,trr;
+wire    trt_temp;
+reg     trt_temp_r;
+wire    trt_temp_neg;
+
+wire    trr_temp;
+reg     trr_temp_r;
+wire    trr_temp_neg;
+
+reg trt_o;
+wire trr_o;
+
+reg [15:0] cnt_receive;
+wire    idle_flag;
 
 wire [23:0] beam_pos_cnt;
 
 
-wire [3:0] bc_mode;
-wire sel_param;
-wire image_start;
-wire rst_sof;
-wire reset;
 
 //ram_read_port
 
@@ -52,8 +56,8 @@ assign tx_sel = bram_tx_sel_dout_read[7:0];
 genvar kk;
 generate
     for(kk = 0;kk < 8;kk = kk + 1)begin:blk0
-        assign trt_ps[kk] =  tx_sel[kk] ? trt : 0;
-        assign trr_ps[kk] =  tx_sel[kk] ? trr : 0;
+        assign trt_ps[kk] =  tx_sel[kk] ? trt_o : 0;
+        assign trr_ps[kk] =  tx_sel[kk] ? trr_o : 0;
     end
 endgenerate
 
@@ -66,9 +70,44 @@ always@(posedge sys_clk)begin
 	    CFGBC_OUTEN_r <= {CFGBC_OUTEN_r[DWIDTH-1:0], tr_en};
 end
 
-assign trt = CFGBC_OUTEN_r[DWIDTH/2];
-assign trr = |CFGBC_OUTEN_r;
+assign trt_temp = CFGBC_OUTEN_r[DWIDTH/2];
+assign trr_temp = |CFGBC_OUTEN_r;
 
+
+//关闭tr芯片（使其处于负载态）
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        trt_o <= 1;
+    else if(idle_flag)
+        trt_o <= 1;
+    else if(trt_temp_neg)
+        trt_o <= 0;
+    else 
+        trt_o <= trt_o;
+end
+assign trr_o = trr_temp;
+
+//生成trt_temp_neg
+always@(posedge sys_clk)trt_temp_r <= trt_temp;
+assign trt_temp_neg = trt_temp_r && (~trt_temp);
+
+//生成trr_temp_neg
+always@(posedge sys_clk)trr_temp_r <= trr_temp;
+assign trr_temp_neg = trr_temp_r && (~trr_temp);
+//接收计时
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        cnt_receive <= 16'hffff;
+    else if(trr_temp_neg)
+        cnt_receive <= 0;
+    else if(cnt_receive == receive_period - 1)
+        cnt_receive <= cnt_receive;
+    else 
+        cnt_receive <= cnt_receive + 1;
+end
+assign idle_flag = cnt_receive == receive_period - 2;
+
+//生成prf的计数器
 always @(posedge sys_clk) begin
     if(sys_rst)
         cnt_prf <= 0;

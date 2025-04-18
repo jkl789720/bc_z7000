@@ -62,7 +62,7 @@ ila_check_back_ram_w u_u_ila_check_back_ram_w (
 
 
 	.probe0(bram_we     ),//1
-	.probe1(bram_addr   ),//32
+	.probe1(bram_addr   ),//10
 	.probe2(bram_data   ),//32
 	.probe3(done        ) //1
 );

@@ -7,6 +7,7 @@ input               tr_en       ,
 input  [3:0]        bc_mode     ,
 input               sel_param   ,
 input               image_start ,
+input  [15:0]       receive_period ,
 output [7:0]        trt         ,
 output [7:0]        trr         
 
@@ -28,6 +29,7 @@ bc_mode u_bc_mode(
 . bc_mode       (bc_mode     ),
 . sel_param     (sel_param   ),
 . image_start   (image_start ),
+. receive_period   (receive_period ),
 . trt_o_p_0     (trt_o_p_0   ),//v0
 . trr_o_p_0     (trr_o_p_0   ),//v0
 . trt_o_p_1     (trt_o_p_1   ),//v1
