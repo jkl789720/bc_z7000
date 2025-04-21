@@ -428,7 +428,7 @@ assign BC1_SEL  = {4{sel_o}} ;
 assign BC1_CLK  = {4{scl_o}} ;
 assign BC1_DATA = sd_o[15:0] ;
 assign BC1_LD   = {4{ld_o}}  ;
-assign BC1_TRT  = trt[3:0]   ;//边坡为 trt_ps junke为 trt
+assign BC1_TRT  = trt[3:0]   ;//边坡为 trt_ps junke/ku polarization为 trt
 assign BC1_TRR  = trr[3:0]   ;
 
 
@@ -436,7 +436,7 @@ assign BC2_SEL  = {4{sel_o}} ;
 assign BC2_CLK  = {4{scl_o}} ;
 assign BC2_DATA = sd_o[31:16];
 assign BC2_LD   = {4{ld_o}}  ;
-assign BC2_TRT  = trt[7:4]   ;//边坡为 trt_ps junke为 trt
+assign BC2_TRT  = trt[7:4]   ;//边坡为 trt_ps junke/ku polarization为 trt
 assign BC2_TRR  = trr[7:4]   ;
 
 assign BC_RST   = rst_o      ;
@@ -495,7 +495,7 @@ assign rst_o_h    = rst_o    ;
         .probe14    (BC2_TRT[3] ), // input wire [0:0]  probe6 
         .probe15    (BC2_TRR[3] ), // input wire [0:0]  probe7
         .probe16    (prf), // input wire [0:0]  probe7
-        .probe17    (tr_en), // input wire [0:0]  probe7
+        .probe17    (tr_en_o), // input wire [0:0]  probe7
         .probe18    (bc_mode), // input wire [3:0]  probe7
         .probe19    (image_start), // input wire [0:0]  probe7
         .probe20    (sys_rst) // input wire [0:0]  probe7
@@ -535,7 +535,8 @@ assign rst_o_h    = rst_o    ;
     .probe_in9    (temper_req           ),//1
     .probe_in10   (bc_mode              ),//1
     .probe_in11   (sel_param            ),//1
-    .probe_in12   (reset_sof            ) //1
+    .probe_in12   (reset_sof            ), //1
+    .probe_in13   (receive_period       ) //16
     );
     
 // `endif

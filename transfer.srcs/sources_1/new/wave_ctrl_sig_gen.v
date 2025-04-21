@@ -50,7 +50,7 @@ assign period0 = 900;
 wire [63:0] period1,cnt_tr_num1;
 assign period1 = 100;
 // assign cnt_tr_num1 = (period1 * SYSHZ) / 1000_000;
-assign cnt_tr_num0 = 100; // 150_000 3ms
+assign cnt_tr_num0 = 900; // 150_000 3ms
                           // 900 18us
                           // 2800 56us
                           // 13000 260us
@@ -58,7 +58,7 @@ assign cnt_tr_num0 = 100; // 150_000 3ms
                           // 50000 1ms
                           // 100000 2ms
                           // 200000 4ms
-assign cnt_tr_num1 = 100;//100us
+assign cnt_tr_num1 = 5000;//100us
 
 wire [31:0] cnt_tr_num;
 assign cnt_tr_num = cnt_tr_num0 + cnt_tr_num1;
