@@ -38,7 +38,7 @@ reg     trt_temp_r;
 wire    trt_temp_neg;
 
 wire    trr_temp;
-reg     trr_temp_r;
+reg  [3:0]   trr_temp_r;
 wire    trr_temp_neg;
 
 reg trt_o;
@@ -92,15 +92,15 @@ always @(posedge sys_clk) begin
     else 
         trt_o <= trt_o;
 end
-assign trr_o = trr_temp;
+assign trr_o = sys_rst ? 0 : trr_temp | trr_temp_r[3];
 
 //生成trt_temp_neg
 always@(posedge sys_clk)trt_temp_r <= trt_temp;
 assign trt_temp_neg = trt_temp_r && (~trt_temp);
 
 //生成trr_temp_neg
-always@(posedge sys_clk)trr_temp_r <= trr_temp;
-assign trr_temp_neg = trr_temp_r && (~trr_temp);
+always@(posedge sys_clk)trr_temp_r <= {trr_temp_r[2:0],trr_temp};
+assign trr_temp_neg = trr_temp_r[0] && (~trr_temp);
 //接收计时
 always @(posedge sys_clk) begin
     if(sys_rst)
@@ -155,13 +155,13 @@ end
 
 always @(posedge sys_clk) begin
     if(sys_rst)begin
-        trt_o_p_0 = 0 ;
+        trt_o_p_0 = 1 ;
         trr_o_p_0 = 0 ;
-        trt_o_p_1 = 0 ;
+        trt_o_p_1 = 1 ;
         trr_o_p_1 = 0 ;
-        trt_o_p_2 = 0 ;
+        trt_o_p_2 = 1 ;
         trr_o_p_2 = 0 ;
-        trt_o_p_3 = 0 ;
+        trt_o_p_3 = 1 ;
         trr_o_p_3 = 0 ;
     end
     else begin
@@ -179,37 +179,37 @@ always @(posedge sys_clk) begin
             end
             1: begin
                 //2024/12/19改动 PS给HH(sel == 0)出信号1  PS给VV(sel == 1)出信号0  0:h 1:v
-                trt_o_p_0 = sel_dff[1] ? trt_o :  0;//v
-                trr_o_p_0 = sel_dff[1] ? trr_o :  0;
-                trt_o_p_1 = sel_dff[1] ? trt_o :  0;
-                trr_o_p_1 = sel_dff[1] ? trr_o :  0;
+                trt_o_p_0 = trt_o;//v
+                trr_o_p_0 = sel_dff[1] && trr_o;
+                trt_o_p_1 = trt_o;
+                trr_o_p_1 = sel_dff[1] && trr_o;
 
-                trt_o_p_2 = sel_dff[1] ? 0 : trt_o ;//h
-                trr_o_p_2 = sel_dff[1] ? 0 : trr_o ;
-                trt_o_p_3 = sel_dff[1] ? 0 : trt_o ;
-                trr_o_p_3 = sel_dff[1] ? 0 : trr_o ;
+                trt_o_p_2 = trt_o;//h
+                trr_o_p_2 = (sel_dff[1] == 0 ) && trr_o ;
+                trt_o_p_3 = trt_o;
+                trr_o_p_3 = (sel_dff[1] == 0) &&  trr_o ;
             end
             2: begin//保留，后续补全
                 //2025/02/20改动 PS给HH(sel == 0)出信号2  PS给VV(sel == 1)出信号0      0:h 1:v
-                trt_o_p_0 = sel_dff[1] ? trt_o : 0 ;//v
-                trr_o_p_0 = sel_dff[1] ? trr_o : 0 ;
-                trt_o_p_1 = 0 ;
+                trt_o_p_0 = trt_o;//v
+                trr_o_p_0 = sel_dff[1] && trr_o ;
+                trt_o_p_1 = 1 ;
                 trr_o_p_1 = 0 ;
 
-                trt_o_p_2 = sel_dff[1] ? 0 : trt_o ;//h
-                trr_o_p_2 = sel_dff[1] ? 0 : trr_o ;
-                trt_o_p_3 = 0 ;
+                trt_o_p_2 = trt_o;//h
+                trr_o_p_2 = (sel_dff[1] == 0) && trr_o ;
+                trt_o_p_3 = 1 ;
                 trr_o_p_3 = 0 ;
             end
             3: begin
-                trt_o_p_0 = 0 ;
+                trt_o_p_0 = 1 ;
                 trr_o_p_0 = 0 ;
                 trt_o_p_1 = trt_o ;
                 trr_o_p_1 = trr_o ;
 
-                trt_o_p_2 = 0 ;
+                trt_o_p_2 = 1 ;
                 trr_o_p_2 = 0 ;
-                trt_o_p_3 = 0 ;
+                trt_o_p_3 = 1 ;
                 trr_o_p_3 = 0 ;
             end
             4: begin
@@ -218,66 +218,66 @@ always @(posedge sys_clk) begin
                 trt_o_p_1 = trt_o ;
                 trr_o_p_1 = trr_o ;
 
-                trt_o_p_2 = 0 ;
+                trt_o_p_2 = 1 ;
                 trr_o_p_2 = 0 ;
-                trt_o_p_3 = 0 ;
+                trt_o_p_3 = 1 ;
                 trr_o_p_3 = 0 ;
             end
             5: begin//详细待定
-                trt_o_p_0 = 0 ;
+                trt_o_p_0 = 1 ;
                 trr_o_p_0 = 0 ;
                 trt_o_p_1 = trt_o ;
                 trr_o_p_1 = trr_o ;
 
-                trt_o_p_2 = 0 ;
+                trt_o_p_2 = 1 ;
                 trr_o_p_2 = 0 ;
-                trt_o_p_3 = 0 ;
+                trt_o_p_3 = 1 ;
                 trr_o_p_3 = 0 ;
             end
             6: begin
-                trt_o_p_0 = cnt_prf ? trt_o : 0 ;
-                trr_o_p_0 = cnt_prf ? trr_o : 0 ;
+                trt_o_p_0 = trt_o;
+                trr_o_p_0 = (cnt_prf == 1) && trr_o;
 
-                trt_o_p_1 = cnt_prf ? 0 : trt_o ;
-                trr_o_p_1 = cnt_prf ? 0 : trr_o ;
+                trt_o_p_1 = trt_o;
+                trr_o_p_1 = (cnt_prf == 0) && trr_o;
 
-                trt_o_p_2 = 0 ;
+                trt_o_p_2 = 1 ;
                 trr_o_p_2 = 0 ;
 
-                trt_o_p_3 = 0 ;
+                trt_o_p_3 = 1 ;
                 trr_o_p_3 = 0 ;
             end
             7: begin
-                trt_o_p_0 = cnt_prf ? trt_o : 0 ;
-                trr_o_p_0 = cnt_prf ? trr_o : 0 ;
-                trt_o_p_1 = 0 ;
+                trt_o_p_0 = trt_o;
+                trr_o_p_0 = cnt_prf & trr_o;
+                trt_o_p_1 = 1 ;
                 trr_o_p_1 = 0 ;
 
-                trt_o_p_2 = cnt_prf ? 0 : trt_o ;
-                trr_o_p_2 = cnt_prf ? 0 : trr_o ;
-                trt_o_p_3 = 0 ;
+                trt_o_p_2 = trt_o ;
+                trr_o_p_2 = (cnt_prf == 0) && trr_o ;
+                trt_o_p_3 = 1 ;
                 trr_o_p_3 = 0 ;
             end
             8:begin
-                trt_o_p_0 = cnt_prf ? trt_o : 0 ;//先出V再出H
-                trr_o_p_0 = cnt_prf ? trr_o : 0 ;
-                trt_o_p_1 = cnt_prf ? trt_o : 0 ;
-                trr_o_p_1 = cnt_prf ? trr_o : 0 ;
+                trt_o_p_0 = trt_o ;//先出V再出H
+                trr_o_p_0 = cnt_prf & trr_o; 
+                trt_o_p_1 = trt_o ;
+                trr_o_p_1 = cnt_prf & trr_o ;
 
-                trt_o_p_2 = cnt_prf ? 0 : trt_o ;
-                trr_o_p_2 = cnt_prf ? 0 : trr_o ;
-                trt_o_p_3 = cnt_prf ? 0 : trt_o ;
-                trr_o_p_3 = cnt_prf ? 0 : trr_o ;
+                trt_o_p_2 = trt_o ;
+                trr_o_p_2 = (cnt_prf == 0) & trr_o ;
+                trt_o_p_3 = trt_o ;
+                trr_o_p_3 = (cnt_prf == 0) & trr_o ;
             end
             default: begin
-                trt_o_p_0 = 0 ;
+                trt_o_p_0 = 1 ;
                 trr_o_p_0 = 0 ;
-                trt_o_p_1 = 0 ;
+                trt_o_p_1 = 1 ;
                 trr_o_p_1 = 0 ;
 
-                trt_o_p_2 = 0 ;
+                trt_o_p_2 = 1 ;
                 trr_o_p_2 = 0 ;
-                trt_o_p_3 = 0 ;
+                trt_o_p_3 = 1 ;
                 trr_o_p_3 = 0 ;
             end
         endcase

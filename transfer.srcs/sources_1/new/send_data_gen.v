@@ -590,12 +590,6 @@ bram_delay u_bram_delay (
   .rstb         (0                  )
 );
 
-ila_z7ps_bccode_bram_r u_ila_z7ps_bccode_bram_r (
-	.clk       (sys_clk     ), //
-	.probe0    (rd_en       ), //
-	.probe1    (rd_addr     ), //32
-	.probe2    (rd_data     )  //128 
-);
 
 //------------------------调试信号
 

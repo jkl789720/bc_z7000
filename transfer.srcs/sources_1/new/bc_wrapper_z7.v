@@ -428,7 +428,7 @@ assign BC1_SEL  = {4{sel_o}} ;
 assign BC1_CLK  = {4{scl_o}} ;
 assign BC1_DATA = sd_o[15:0] ;
 assign BC1_LD   = {4{ld_o}}  ;
-assign BC1_TRT  = trt[3:0]   ;//边坡为 trt_ps junke/ku polarization为 trt
+assign BC1_TRT  = trt[3:0]   ;//边坡为 trt_ps || junke/ku_polarization 为 trt
 assign BC1_TRR  = trr[3:0]   ;
 
 
@@ -436,7 +436,7 @@ assign BC2_SEL  = {4{sel_o}} ;
 assign BC2_CLK  = {4{scl_o}} ;
 assign BC2_DATA = sd_o[31:16];
 assign BC2_LD   = {4{ld_o}}  ;
-assign BC2_TRT  = trt[7:4]   ;//边坡为 trt_ps junke/ku polarization为 trt
+assign BC2_TRT  = trt[7:4]   ;//边坡为 trt_ps || junke/ku_polarization 为 trt
 assign BC2_TRR  = trr[7:4]   ;
 
 assign BC_RST   = rst_o      ;
