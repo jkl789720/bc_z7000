@@ -98,6 +98,7 @@ wire                       valid_in         ;
 
 wire [31:0]                beam_pos_num     ;
 wire [15:0]                receive_period   ;
+wire [15:0]                wave_switch_interval;
 
 wire                       temper_ready     ;
 wire                       temper_en        ;
@@ -165,6 +166,8 @@ wire [7:0] trr;
 
 wire [23:0] beam_pos_cnt;
 
+wire tr_en_merge;
+
 
 reg [31:0]  app_param0_r [1:0];
 reg [31:0]  app_param1_r [1:0];
@@ -215,13 +218,14 @@ always@(posedge sys_clk)begin
 end
 
 //寄存器赋值
- assign prf_start_in        = app_param0_r[1][0];
- assign prf_mode            = app_param0_r[1][1];
- assign ld_mode             = app_param0_r[1][2];
- assign send_flag_in        = app_param0_r[1][3];//打拍
- assign single_lane         = app_param0_r[1][4];//打拍
- assign tr_mode             = app_param0_r[1][5];
- assign polarization_mode   = app_param0_r[1][6];
+ assign prf_start_in           = app_param0_r[1][0];
+ assign prf_mode               = app_param0_r[1][1];
+ assign ld_mode                = app_param0_r[1][2];
+ assign send_flag_in           = app_param0_r[1][3];//打拍
+ assign single_lane            = app_param0_r[1][4];//打拍
+ assign tr_mode                = app_param0_r[1][5];
+ assign polarization_mode      = app_param0_r[1][6];
+ assign wave_switch_interval   = app_param0_r[1][31:16];
 
 
 assign valid_in         = app_param1_r[1][0];//打拍
@@ -280,6 +284,7 @@ u_send_data_gen(
 
 .  spi_done             (spi_done               ) ,
 
+.  wave_switch_interval (wave_switch_interval   ) ,
 .  temper_read_done     (temper_read_done       ) ,
 .  temper_en            (temper_en              ) ,
 
@@ -358,17 +363,17 @@ u_wave_ctrl_sig_gen(
 . single_lane			(single_lane		),
 . tr_mode				(tr_mode			),
 . tr_en				    (tr_en				),
-. tr_en_o				(tr_en_o		    )
+. tr_en_merge	        (tr_en_merge		)
 );
 
 //从PS端扩充，边坡发射使能信号
 tr_en_ps u_tr_en_ps(
 . sys_clk            (sys_clk         ) ,
 . sys_rst            (sys_rst         ) ,
-. tr_en              (tr_en_o         ) ,
-. prf                (prf             ) ,
+. tr_en              (tr_en_merge     ) ,
 . beam_pos_num       (beam_pos_num    ) ,
-. receive_period       (receive_period    ) ,
+. beam_pos_cnt       (beam_pos_cnt    ) ,
+. receive_period     (receive_period  ) ,
 . bram_tx_sel_clk    (bram_tx_sel_clk ) ,
 . bram_tx_sel_en     (bram_tx_sel_en  ) ,
 . bram_tx_sel_we     (bram_tx_sel_we  ) ,
@@ -385,7 +390,7 @@ bc_txen_expand u_bc_txen_expand(
 .  sys_clk     (sys_clk     ),
 .  sys_rst     (sys_rst     ),//不能被软件复位
 .  prf_in      (prf         ),
-.  tr_en       (tr_en_o     ),
+.  tr_en       (tr_en_merge ),
 .  bc_mode     (bc_mode     ),
 .  sel_param   (sel_param   ),
 .  image_start (image_start ),
@@ -412,13 +417,14 @@ wire                            ld_o_b         ;
 wire                            tr_o_b         ;
 wire                            rst_o_b        ;
 
-// wire                            sel_o_h        ;
-// wire                            scl_o_h    	   ;
-// wire [GROUP_CHIP_NUM-1:0]       sd_o_h         ;
-// wire                            ld_o_h         ;
-// wire                            dary_o_h       ;
-// wire                            tr_en_o        ;//2025/04/11 15:38 跟上面的管脚冲突，亟需处理
-// wire                            rst_o_h        ;
+wire                            sel_o_h        ;
+wire                            scl_o_h    	   ;
+wire [GROUP_CHIP_NUM-1:0]       sd_o_h         ;
+wire                            ld_o_h         ;
+wire                            dary_o_h       ;
+wire                            trt_o_h        ;
+wire                            trr_o_h        ;
+wire                            rst_o_h        ;
 
 
 
@@ -447,7 +453,7 @@ assign cmd_flag_a = cmd_flag ;
 assign scl_o_a    = scl_o    ;
 assign sd_o_a     = sd_o     ;
 assign ld_o_a     = ld_o     ;
-assign tr_o_a     = tr_en_o && (~polarization_mode)     ;
+assign tr_o_a     = tr_en_merge && (~polarization_mode)     ;
 assign rst_o_a    = rst_o    ;
 
 assign sel_o_b    = sel_o    ;
@@ -455,7 +461,7 @@ assign cmd_flag_b = cmd_flag ;
 assign scl_o_b    = scl_o    ;
 assign sd_o_b     = sd_o     ;
 assign ld_o_b     = ld_o     ;
-assign tr_o_b     = tr_en_o && polarization_mode     ;
+assign tr_o_b     = tr_en_merge && polarization_mode     ;
 assign rst_o_b    = rst_o    ;
 
 //--------------------mini_sar--------------------//
@@ -464,6 +470,8 @@ assign scl_o_h    = scl_o    ;
 assign sd_o_h     = sd_o     ;
 assign dary_o_h   = dary_o   ;
 assign ld_o_h     = ld_o     ;
+assign trt_o_h    = trt[0]     ;
+assign trr_o_h    = trr[0]     ;
 assign rst_o_h    = rst_o    ;
 
 // `ifdef DEBUG
@@ -495,7 +503,7 @@ assign rst_o_h    = rst_o    ;
         .probe14    (BC2_TRT[3] ), // input wire [0:0]  probe6 
         .probe15    (BC2_TRR[3] ), // input wire [0:0]  probe7
         .probe16    (prf), // input wire [0:0]  probe7
-        .probe17    (tr_en_o), // input wire [0:0]  probe7
+        .probe17    (tr_en_merge), // input wire [0:0]  probe7
         .probe18    (bc_mode), // input wire [3:0]  probe7
         .probe19    (image_start), // input wire [0:0]  probe7
         .probe20    (sys_rst) // input wire [0:0]  probe7
@@ -513,7 +521,7 @@ assign rst_o_h    = rst_o    ;
         .probe6         (dary_o           ),//1 
         .probe7         (ld_o             ),//1 
         .probe8         (prf              ),//1 
-        .probe9         (tr_en_o          ),//1 
+        .probe9         (tr_en_merge      ),//1 
         .probe10        (cnt_bit          ),//32 
         .probe11        (beam_pos_cnt[7:0]) //8
     );

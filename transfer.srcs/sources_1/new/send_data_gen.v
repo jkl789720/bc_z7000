@@ -48,6 +48,7 @@ input                       ld_mode                     ,
 
 //当前组发送完成
 input                       spi_done                    ,
+input   [15:0]              wave_switch_interval        ,
 
 //温度相关
 input                       temper_read_done            ,
@@ -165,19 +166,36 @@ localparam WAIT_LD                      = 5'd12 ;
 localparam SEND_LD                      = 5'd13 ;
 localparam ARBITRATE1                   = 5'd14 ;//判断是单波位还是多波位
 localparam CHANGE_BW                    = 5'd15 ;
-localparam READ_TEMPERATURE             = 5'd16 ;
-localparam WHETHER_READ_TEMPERATURE     = 5'd17 ;
+localparam WAIT_SOM_PRF                 = 5'd16 ;
+localparam READ_TEMPERATURE             = 5'd17 ;
+localparam WHETHER_READ_TEMPERATURE     = 5'd18 ;
 //---------------------状态切换相关变量定义-------------------------------//
 // reg cmd_send_done,data_send_done;
 // reg now_beam_get_done;
+wire [63:0] ns_value_0,ns_value_1,time_1us,time_xus;
 wire  now_group_send_done;
 reg  now_beam_send_done;
 wire group_data_get_done;
 reg  ld_done;
+wire prf_wait_done;
+reg first_beam_pos;
+reg [31:0] cnt_prf;
+
+//多波位第一个波位标识
+always@(posedge sys_clk)begin
+    if(sys_rst)
+        first_beam_pos <= 0;
+    else if(valid_pos)
+        first_beam_pos <= 1;
+    else if(now_beam_send_done)
+        first_beam_pos <= 0;
+end
+
+assign prf_wait_done =  prf_pos && cnt_prf == wave_switch_interval - 1;
 
 assign now_group_send_done = spi_done;
 
-wire [63:0] ns_value_0,ns_value_1,time_1us,time_xus;
+
 assign ns_value_0 = 1200;
 `ifdef SAR
     assign ns_value_1 = 4500;
@@ -379,10 +397,12 @@ always@(*)begin
             WAIT_DARY :begin
                 if(ld_mode_v == 0)
                     n_state = SEND_DARY;
-                else if(prf_pos)
-                    n_state = SEND_DARY;
-                else
-                    n_state = c_state;
+                else begin
+                    if(first_beam_pos)
+                        n_state = prf_pos ? SEND_DARY : c_state;
+                    else
+                        n_state = prf_wait_done ? SEND_DARY : c_state;
+                end
             end
             SEND_DARY :begin
                 if(cnt_ld == time_1us - 1)
@@ -422,13 +442,19 @@ always@(*)begin
             end
             `ifdef SAR
                 CHANGE_BW : begin
-                    n_state = WAIT_PRF;
+                    n_state = WAIT_SOM_PRF;
                 end
             `else
                 CHANGE_BW : begin
                     n_state = CMD_GEN;
                 end
             `endif
+            WAIT_SOM_PRF : begin
+                if(prf_wait_done)
+                    n_state = CMD_GEN;
+                else
+                    n_state = c_state;
+            end
             default: n_state = IDLE;
         endcase
     end
@@ -449,6 +475,7 @@ always@(posedge sys_clk)begin
         now_beam_send_done <= 0;
         cnt_delay          <= 0;
         temper_en          <= 0;
+        cnt_prf           <= 0;
     end
     else begin
         case (c_state)
@@ -505,8 +532,13 @@ always@(posedge sys_clk)begin
                 if(now_beam_get_done)
                     flag <= 0;
                 trig <= 0;
+                cnt_prf <= 0;
+            end
+            WAIT_DARY:begin
+                if(prf_pos) cnt_prf <= cnt_prf + 1;
             end
             SEND_DARY :begin
+                cnt_prf <= 0;
                 dary_o <= 1;
                 if(cnt_ld == time_1us - 1)begin
                     cnt_ld               <= 0;
@@ -551,6 +583,15 @@ always@(posedge sys_clk)begin
                     beam_pos_cnt <= 0;
                 else
                     beam_pos_cnt <= beam_pos_cnt + 1;
+                
+            end
+            WAIT_SOM_PRF:begin
+                if(prf_pos)begin
+                    if(prf_wait_done)
+                        cnt_prf <= 0;
+                    else    
+                        cnt_prf <= cnt_prf + 1;
+                end
             end
         endcase
     end

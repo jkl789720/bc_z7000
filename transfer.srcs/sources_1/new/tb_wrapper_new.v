@@ -128,8 +128,8 @@ assign  rama_addr = cnt_lane_total * 4;//总的当前写入通道数
 reg soft_rst;
 
 assign app_param2 = BEAM_POS_NUM;
-assign app_param1 = {16'd300,8'b0,soft_rst,1'b1,4'd2,1'b0,valid_in};
-assign app_param0 = {25'b0,7'b0001111};//外部产生prf、动态配置、发送、内部产生tr
+assign app_param1 = {16'd65535,8'b0,soft_rst,1'b1,4'd2,1'b0,valid_in};
+assign app_param0 = {16'd3,9'b0,7'b0001111};//外部产生prf、动态配置、发送、内部产生tr
 
 
 
@@ -201,7 +201,7 @@ always@(*)begin
                     n_state = VALID;
             end 
             DELAY:begin
-                if(cnt_delay == 10000 - 1)
+                if(cnt_delay == 20000 - 1)
                     n_state = IS_CONTITUE;
                 else
                     n_state = DELAY;

@@ -320,7 +320,7 @@ ila_rfsoc2z7 u_ila_rfsoc2z7 (
 	.probe9 (ram_rfsoc_din      )  // 16  
 );
 
-ila_z7ps_bccode_bram u_ila_z7ps_bccode_bram (
+ila_bccode_bram_rw u_ila_bccode_bram_rw (
 	.clk       (ram_bc_code_clk ), // input wire clk
 	.probe0    (ram_bc_code_en  ), // input wire [0:0]  probe0  
 	.probe1    (ram_bc_code_we  ), // input wire [3:0]  probe1 
@@ -329,7 +329,7 @@ ila_z7ps_bccode_bram u_ila_z7ps_bccode_bram (
 	.probe4    (ram_bc_code_dout)  // input wire [31:0]  probe4 
 );
 
-ila_z7ps_angle_bram u_ila_z7ps_angle_bram (
+ila_ps_angle_bram_rw u_ila_ps_angle_bram_rw (
 	.clk    (ram_bc_angle_clk   ), // input wire clk
 	.probe0 (ram_bc_angle_en    ), // input wire [0:0]  probe0  
 	.probe1 (ram_bc_angle_we    ), // input wire [3:0]  probe1 
@@ -338,7 +338,7 @@ ila_z7ps_angle_bram u_ila_z7ps_angle_bram (
 	.probe4 (ram_bc_angle_dout  )  // input wire [31:0]  probe4
 );
 
-ila_z7ps_txen_bram u_ila_z7ps_txen_bram (
+ila_ps_txen_bram_rw u_ila_ps_txen_bram_rw (
 	.clk                     (bram_tx_sel_clk       ), // input wire clk
 	.probe0                  (bram_tx_sel_en        ),  //1
 	.probe1                  (bram_tx_sel_we        ),  //4
