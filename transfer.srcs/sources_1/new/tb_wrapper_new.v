@@ -129,7 +129,7 @@ reg soft_rst;
 
 assign app_param2 = BEAM_POS_NUM;
 assign app_param1 = {16'd65535,8'b0,soft_rst,1'b1,4'd2,1'b0,valid_in};
-assign app_param0 = {16'd3,9'b0,7'b0001111};//外部产生prf、动态配置、发送、内部产生tr
+assign app_param0 = {16'd0,9'b0,7'b0001111};//外部产生prf、动态配置、发送、内部产生tr
 
 
 

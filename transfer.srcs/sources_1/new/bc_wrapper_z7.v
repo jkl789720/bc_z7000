@@ -475,12 +475,7 @@ assign trr_o_h    = trr[0]     ;
 assign rst_o_h    = rst_o    ;
 
 // `ifdef DEBUG
-    vio_new_reg u_vio_new_reg (
-    .clk(sys_clk),              // input wire clk
-    .probe_in0(bc_mode),  // input wire [3 : 0] probe_in0
-    .probe_in1(sel_param),  // input wire [0 : 0] probe_in1
-    .probe_in2(image_start)  // input wire [0 : 0] probe_in2
-    );
+
 
     ila_trt u_ila_trt (
         .clk(sys_clk), // input wire clk
@@ -544,7 +539,8 @@ assign rst_o_h    = rst_o    ;
     .probe_in10   (bc_mode              ),//1
     .probe_in11   (sel_param            ),//1
     .probe_in12   (reset_sof            ), //1
-    .probe_in13   (receive_period       ) //16
+    .probe_in13   (receive_period       ), //16
+    .probe_in14   (wave_switch_interval )  //16
     );
     
 // `endif

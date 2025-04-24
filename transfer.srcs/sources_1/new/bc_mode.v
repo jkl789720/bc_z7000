@@ -114,69 +114,69 @@ always @(posedge sys_clk) begin
                 //2025/02/20改动 PS给HH(sel == 0)出信号2  PS给VV(sel == 1)出信号0      0:h 1:v
                 trt_o_p_0 = trt_o;//v
                 trr_o_p_0 = sel_dff[1] && trr_o ;
-                trt_o_p_1 = 1 ;
+                trt_o_p_1 = trt_o ;
                 trr_o_p_1 = 0 ;
 
                 trt_o_p_2 = trt_o;//h
                 trr_o_p_2 = (sel_dff[1] == 0) && trr_o ;
-                trt_o_p_3 = 1 ;
+                trt_o_p_3 = trt_o ;
                 trr_o_p_3 = 0 ;
             end
-            3: begin
-                trt_o_p_0 = 1 ;
-                trr_o_p_0 = 0 ;
-                trt_o_p_1 = trt_o ;
-                trr_o_p_1 = trr_o ;
+            // 3: begin
+            //     trt_o_p_0 = 1 ;
+            //     trr_o_p_0 = 0 ;
+            //     trt_o_p_1 = trt_o ;
+            //     trr_o_p_1 = trr_o ;
 
-                trt_o_p_2 = 1 ;
-                trr_o_p_2 = 0 ;
-                trt_o_p_3 = 1 ;
-                trr_o_p_3 = 0 ;
-            end
-            4: begin
-                trt_o_p_0 = trt_o ;
-                trr_o_p_0 = trr_o ;
-                trt_o_p_1 = trt_o ;
-                trr_o_p_1 = trr_o ;
+            //     trt_o_p_2 = 1 ;
+            //     trr_o_p_2 = 0 ;
+            //     trt_o_p_3 = 1 ;
+            //     trr_o_p_3 = 0 ;
+            // end
+            // 4: begin
+            //     trt_o_p_0 = trt_o ;
+            //     trr_o_p_0 = trr_o ;
+            //     trt_o_p_1 = trt_o ;
+            //     trr_o_p_1 = trr_o ;
 
-                trt_o_p_2 = 1 ;
-                trr_o_p_2 = 0 ;
-                trt_o_p_3 = 1 ;
-                trr_o_p_3 = 0 ;
-            end
-            5: begin//详细待定
-                trt_o_p_0 = 1 ;
-                trr_o_p_0 = 0 ;
-                trt_o_p_1 = trt_o ;
-                trr_o_p_1 = trr_o ;
+            //     trt_o_p_2 = 1 ;
+            //     trr_o_p_2 = 0 ;
+            //     trt_o_p_3 = 1 ;
+            //     trr_o_p_3 = 0 ;
+            // end
+            // 5: begin//详细待定
+            //     trt_o_p_0 = 1 ;
+            //     trr_o_p_0 = 0 ;
+            //     trt_o_p_1 = trt_o ;
+            //     trr_o_p_1 = trr_o ;
 
-                trt_o_p_2 = 1 ;
-                trr_o_p_2 = 0 ;
-                trt_o_p_3 = 1 ;
-                trr_o_p_3 = 0 ;
-            end
-            6: begin
-                trt_o_p_0 = trt_o;
-                trr_o_p_0 = (cnt_prf == 1) && trr_o;
+            //     trt_o_p_2 = 1 ;
+            //     trr_o_p_2 = 0 ;
+            //     trt_o_p_3 = 1 ;
+            //     trr_o_p_3 = 0 ;
+            // end
+            // 6: begin
+            //     trt_o_p_0 = trt_o;
+            //     trr_o_p_0 = (cnt_prf == 1) && trr_o;
 
-                trt_o_p_1 = trt_o;
-                trr_o_p_1 = (cnt_prf == 0) && trr_o;
+            //     trt_o_p_1 = trt_o;
+            //     trr_o_p_1 = (cnt_prf == 0) && trr_o;
 
-                trt_o_p_2 = 1 ;
-                trr_o_p_2 = 0 ;
+            //     trt_o_p_2 = 1 ;
+            //     trr_o_p_2 = 0 ;
 
-                trt_o_p_3 = 1 ;
-                trr_o_p_3 = 0 ;
-            end
+            //     trt_o_p_3 = 1 ;
+            //     trr_o_p_3 = 0 ;
+            // end
             7: begin
                 trt_o_p_0 = trt_o;
                 trr_o_p_0 = cnt_prf & trr_o;
-                trt_o_p_1 = 1 ;
+                trt_o_p_1 = trt_o ;
                 trr_o_p_1 = 0 ;
 
                 trt_o_p_2 = trt_o ;
                 trr_o_p_2 = (cnt_prf == 0) && trr_o ;
-                trt_o_p_3 = 1 ;
+                trt_o_p_3 = trt_o ;
                 trr_o_p_3 = 0 ;
             end
             8:begin
