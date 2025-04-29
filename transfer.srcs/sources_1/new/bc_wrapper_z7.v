@@ -1,3 +1,4 @@
+`include "configure.vh"
 //功能：tr信号一分多，又或者说是tr模式控制
 `timescale 1ns / 1ps
 module bc_wrapper_z7#(
@@ -55,7 +56,7 @@ module bc_wrapper_z7#(
     input   [31:0] 			        app_param3	    ,
     output  [31:0] 			        app_status0	    ,
     output  [31:0] 			        app_status1	    ,  
-
+//7000和rfsoc不同
 //BC1_new
     output  [3:0]                   BC1_SEL      ,   
     output  [3:0]                   BC1_CLK      ,         
@@ -125,7 +126,7 @@ wire rd_done = 0;
 wire                       scl_o    	 ;
 wire                       sel_o         ;
 wire                       cmd_flag      ;
-wire [GROUP_CHIP_NUM-1:0]  sd_o          ;
+wire [31:0]                sd_o          ;
 wire                       dary_o        ;
 wire                       ld_o          ;
 wire                       trt_o         ;
@@ -173,7 +174,61 @@ reg [31:0]  app_param0_r [1:0];
 reg [31:0]  app_param1_r [1:0];
 reg [31:0]  app_param2_r [1:0];
 
+//7000和rfsoc不同
+//-------------------------io_assign-----------------------------//
+//--------------------207sar--------------------//
+wire                            sel_o_a        ;
+wire                            cmd_flag_a     ;
+wire                            scl_o_a    	   ;
+wire [GROUP_CHIP_NUM-1:0]       sd_o_a         ;
+wire                            ld_o_a         ;
+wire                            tr_o_a         ;
+wire                            rst_o_a        ;
+    
+wire                            sel_o_b        ;
+wire                            cmd_flag_b     ;
+wire                            scl_o_b    	   ;
+wire [GROUP_CHIP_NUM-1:0]       sd_o_b         ;
+wire                            ld_o_b         ;
+wire                            tr_o_b         ;
+wire                            rst_o_b        ;
+//--------------------mini_sar--------------------//
+wire                            sel_o_h        ;
+wire                            scl_o_h    	   ;
+wire [GROUP_CHIP_NUM-1:0]       sd_o_h         ;
+wire                            ld_o_h         ;
+wire                            dary_o_h       ;
+wire [3:0]                      trt_o_h        ;
+wire [3:0]                      trr_o_h        ;
+wire                            rst_o_h        ;
+//7000和rfsoc不同
+//------------mimo / junke / ku total polarization--------------------//
+// //tr_en_sel_ram
+// wire                          bram_tx_sel_clk ;
+// wire                          bram_tx_sel_en  ;
+// wire [3:0]                    bram_tx_sel_we  ;
+// wire [31:0]                   bram_tx_sel_addr;
+// wire [31:0]                   bram_tx_sel_din ;
+// wire [31:0]                   bram_tx_sel_dout;
+// wire                          bram_tx_sel_rst ;
+// //BC1_new
+// wire  [3:0]                   BC1_SEL      ;  
+// wire  [3:0]                   BC1_CLK      ;        
+// wire  [15:0]                  BC1_DATA     ;   
+// wire  [3:0]                   BC1_LD       ; 
+// wire  [3:0]                   BC1_TRT      ; 
+// wire  [3:0]                   BC1_TRR      ;   
+ 
+// //BC2_new
+// wire  [3:0]                   BC2_SEL      ;   
+// wire  [3:0]                   BC2_CLK      ;         
+// wire  [15:0]                  BC2_DATA     ;    
+// wire  [3:0]                   BC2_LD       ;  
+// wire  [3:0]                   BC2_TRT      ;
+// wire  [3:0]                   BC2_TRR      ;   
 
+// //BC_RST
+// wire                          BC_RST       ; 
 //地址分配
 assign bc_top_addr    = (((GROUP_NUM*GROUP_CHIP_NUM) << 4))*BEAM_NUM;
 assign delay_ram_clk  = rama_clk;
@@ -400,31 +455,7 @@ bc_txen_expand u_bc_txen_expand(
 .  trr          (trr        )
 );
 
-//-------------------------io_assign-----------------------------//
-wire                            sel_o_a        ;
-wire                            cmd_flag_a     ;
-wire                            scl_o_a    	   ;
-wire [GROUP_CHIP_NUM-1:0]       sd_o_a         ;
-wire                            ld_o_a         ;
-wire                            tr_o_a         ;
-wire                            rst_o_a        ;
-    
-wire                            sel_o_b        ;
-wire                            cmd_flag_b     ;
-wire                            scl_o_b    	   ;
-wire [GROUP_CHIP_NUM-1:0]       sd_o_b         ;
-wire                            ld_o_b         ;
-wire                            tr_o_b         ;
-wire                            rst_o_b        ;
 
-wire                            sel_o_h        ;
-wire                            scl_o_h    	   ;
-wire [GROUP_CHIP_NUM-1:0]       sd_o_h         ;
-wire                            ld_o_h         ;
-wire                            dary_o_h       ;
-wire                            trt_o_h        ;
-wire                            trr_o_h        ;
-wire                            rst_o_h        ;
 
 
 
@@ -470,38 +501,38 @@ assign scl_o_h    = scl_o    ;
 assign sd_o_h     = sd_o     ;
 assign dary_o_h   = dary_o   ;
 assign ld_o_h     = ld_o     ;
-assign trt_o_h    = trt[0]     ;
-assign trr_o_h    = trr[0]     ;
+assign trt_o_h    = trt[3:0] ;
+assign trr_o_h    = trr[3:0] ;
 assign rst_o_h    = rst_o    ;
 
 // `ifdef DEBUG
 
-
+//7000和rfsoc不同
     ila_trt u_ila_trt (
         .clk(sys_clk), // input wire clk
 
 
-        .probe0     (BC1_TRT[0] ), // input wire [0:0]  probe0  
-        .probe1     (BC1_TRR[0] ), // input wire [0:0]  probe1 
-        .probe2     (BC1_TRT[1] ), // input wire [0:0]  probe2 
-        .probe3     (BC1_TRR[1] ), // input wire [0:0]  probe3 
-        .probe4     (BC1_TRT[2] ), // input wire [0:0]  probe4 
-        .probe5     (BC1_TRR[2] ), // input wire [0:0]  probe5 
-        .probe6     (BC1_TRT[3] ), // input wire [0:0]  probe6 
-        .probe7     (BC1_TRR[3] ), // input wire [0:0]  probe7
-        .probe8     (BC2_TRT[0] ), // input wire [0:0]  probe0  
-        .probe9     (BC2_TRR[0] ), // input wire [0:0]  probe1 
-        .probe10    (BC2_TRT[1] ), // input wire [0:0]  probe2 
-        .probe11    (BC2_TRR[1] ), // input wire [0:0]  probe3 
-        .probe12    (BC2_TRT[2] ), // input wire [0:0]  probe4 
-        .probe13    (BC2_TRR[2] ), // input wire [0:0]  probe5 
-        .probe14    (BC2_TRT[3] ), // input wire [0:0]  probe6 
-        .probe15    (BC2_TRR[3] ), // input wire [0:0]  probe7
-        .probe16    (prf), // input wire [0:0]  probe7
-        .probe17    (tr_en_merge), // input wire [0:0]  probe7
-        .probe18    (bc_mode), // input wire [3:0]  probe7
-        .probe19    (image_start), // input wire [0:0]  probe7
-        .probe20    (sys_rst) // input wire [0:0]  probe7
+        .probe0     (BC1_TRT[0] ), // 1
+        .probe1     (BC1_TRR[0] ), // 1
+        .probe2     (BC1_TRT[1] ), // 1
+        .probe3     (BC1_TRR[1] ), // 1
+        .probe4     (BC1_TRT[2] ), // 1
+        .probe5     (BC1_TRR[2] ), // 1
+        .probe6     (BC1_TRT[3] ), // 1
+        .probe7     (BC1_TRR[3] ), // 1
+        .probe8     (BC2_TRT[0] ), // 1
+        .probe9     (BC2_TRR[0] ), // 1
+        .probe10    (BC2_TRT[1] ), // 1
+        .probe11    (BC2_TRR[1] ), // 1
+        .probe12    (BC2_TRT[2] ), // 1
+        .probe13    (BC2_TRR[2] ), // 1
+        .probe14    (BC2_TRT[3] ), // 1
+        .probe15    (BC2_TRR[3] ), // 1
+        .probe16    (prf        ), // 1
+        .probe17    (tr_en_merge), // 1
+        .probe18    (bc_mode    ), // 3
+        .probe19    (image_start), // 1
+        .probe20    (sys_rst    )  // 1
     );
     wire [31:0] sd;
     assign sd = sd_o;

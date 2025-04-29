@@ -12,6 +12,7 @@ output [7:0]        trt         ,
 output [7:0]        trr         
 
 );
+//7000和rfsoc不同
 wire trt_o_p_0;
 wire trr_o_p_0;
 wire trt_o_p_2;
