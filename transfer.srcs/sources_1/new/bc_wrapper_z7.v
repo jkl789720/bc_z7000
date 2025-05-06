@@ -100,6 +100,7 @@ wire                       valid_in         ;
 wire [31:0]                beam_pos_num     ;
 wire [15:0]                receive_period   ;
 wire [15:0]                wave_switch_interval;
+wire [1:0]                send_status_sel;
 
 wire                       temper_ready     ;
 wire                       temper_en        ;
@@ -289,7 +290,8 @@ assign bc_mode          = app_param1_r[1][5:2];//打拍
 assign sel_param        = app_param1_r[1][6];//打拍
 assign rst_soft         = app_param1_r[1][7];
 assign image_start      = app_param1_r[1][8];
-assign receive_period      = app_param1_r[1][31:16];
+assign send_status_sel  = app_param1_r[1][10:9];
+assign receive_period   = app_param1_r[1][31:16];
 
 assign beam_pos_num	    = app_param2_r[1]   ;
 
@@ -450,6 +452,7 @@ bc_txen_expand u_bc_txen_expand(
 .  sel_param   (sel_param   ),
 .  image_start (image_start ),
 .  receive_period (receive_period ),
+.  send_status_sel (send_status_sel ),
 
 .  trt          (trt        ),
 .  trr          (trr        )
@@ -571,7 +574,8 @@ assign rst_o_h    = rst_o    ;
     .probe_in11   (sel_param            ),//1
     .probe_in12   (reset_sof            ), //1
     .probe_in13   (receive_period       ), //16
-    .probe_in14   (wave_switch_interval )  //16
+    .probe_in14   (wave_switch_interval ), //16
+    .probe_in15   (send_status_sel      )  //2
     );
     
 // `endif

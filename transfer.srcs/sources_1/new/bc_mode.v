@@ -16,6 +16,7 @@ input       image_start,
 
 input [15:0] receive_period,
 
+output reg  cnt_prf    ,
 
 output reg  trt_o_p_0  ,//v0
 output reg  trr_o_p_0  ,//v0
@@ -32,7 +33,7 @@ reg [2:0] prf_dff;
 wire prf_pos;
 reg [2:0] image_start_dff;
 wire image_start_pos;
-reg cnt_prf;
+// reg cnt_prf;
 reg [1:0] sel_dff;
 wire trt_o;
 wire trr_o;
