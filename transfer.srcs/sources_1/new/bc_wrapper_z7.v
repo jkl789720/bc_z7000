@@ -100,7 +100,8 @@ wire                       valid_in         ;
 wire [31:0]                beam_pos_num     ;
 wire [15:0]                receive_period   ;
 wire [15:0]                wave_switch_interval;
-wire [1:0]                send_status_sel;
+wire [1:0]                send_permission;
+wire [1:0]                receive_permission;
 
 wire                       temper_ready     ;
 wire                       temper_en        ;
@@ -121,6 +122,11 @@ wire 					   cpu_dat_sd_en        ;
 wire                       spi_done             ;//一个组发送完，而不是整个波位发送完成，这是区分于温度命名的
 wire                       ld_done              ;
 wire                       now_beam_send_done   ;
+
+wire                       cs_n_init            ;
+wire                       sclk_init            ;
+wire                       mosi_init            ;
+wire                       init_done            ;
 
 wire rd_done = 0;
 
@@ -284,19 +290,20 @@ end
  assign wave_switch_interval   = app_param0_r[1][31:16];
 
 
-assign valid_in         = app_param1_r[1][0];//打拍
-assign temper_req       = app_param1_r[1][1];//打拍
-assign bc_mode          = app_param1_r[1][5:2];//打拍
-assign sel_param        = app_param1_r[1][6];//打拍
-assign rst_soft         = app_param1_r[1][7];
-assign image_start      = app_param1_r[1][8];
-assign send_status_sel  = app_param1_r[1][10:9];
-assign receive_period   = app_param1_r[1][31:16];
+assign valid_in             = app_param1_r[1][0];//打拍
+assign temper_req           = app_param1_r[1][1];//打拍
+assign bc_mode              = app_param1_r[1][5:2];//打拍
+assign sel_param            = app_param1_r[1][6];//打拍
+assign rst_soft             = app_param1_r[1][7];
+assign image_start          = app_param1_r[1][8];
+assign send_permission      = app_param1_r[1][10:9];
+assign receive_permission   = app_param1_r[1][12:11];
+assign receive_period       = app_param1_r[1][31:16];
 
 assign beam_pos_num	    = app_param2_r[1]   ;
 
 assign prf = prf_mode ? prf_pin_in : prf_rf_in;
-assign reset = sys_rst || rst_soft;
+assign reset = sys_rst || rst_soft || (~init_done);
 
 		
 
@@ -426,7 +433,7 @@ u_wave_ctrl_sig_gen(
 //从PS端扩充，边坡发射使能信号
 tr_en_ps u_tr_en_ps(
 . sys_clk            (sys_clk         ) ,
-. sys_rst            (sys_rst         ) ,
+. sys_rst            (reset           ) ,
 . tr_en              (tr_en_merge     ) ,
 . beam_pos_num       (beam_pos_num    ) ,
 . beam_pos_cnt       (beam_pos_cnt    ) ,
@@ -445,68 +452,79 @@ tr_en_ps u_tr_en_ps(
 //根据bcmode扩充
 bc_txen_expand u_bc_txen_expand(
 .  sys_clk     (sys_clk     ),
-.  sys_rst     (sys_rst     ),//不能被软件复位
+.  sys_rst     (reset       ),//不能被软件复位
 .  prf_in      (prf         ),
 .  tr_en       (tr_en_merge ),
 .  bc_mode     (bc_mode     ),
 .  sel_param   (sel_param   ),
 .  image_start (image_start ),
 .  receive_period (receive_period ),
-.  send_status_sel (send_status_sel ),
+.  send_permission (send_permission ),
+.  receive_permission (receive_permission ),
 
 .  trt          (trt        ),
 .  trr          (trr        )
 );
 
 
-
-
-
+init_fsm#(
+    . SYSHZ                 (SYSHZ          )  ,
+    . SCLHZ                 (SCLHZ          )  ,
+    . INIT_REG_NUM          (16             )  
+)
+u_init_fsm(
+    . sys_clk       (sys_clk    ) ,
+    . sys_rst       (sys_rst    ) ,
+    . chip_reset    (chip_reset ) ,
+    . cs_n          (cs_n_init  ) ,
+    . sclk          (sclk_init  ) ,
+    . mosi          (mosi_init  ) ,
+    . init_done     (init_done  ) 
+);
 
 //------------mimo or junke--------------------//
-assign BC1_SEL  = {4{sel_o}} ;
-assign BC1_CLK  = {4{scl_o}} ;
-assign BC1_DATA = sd_o[15:0] ;
+assign BC1_SEL  =  init_done ? {4{sel_o}} :  {4{cs_n_init}} ;
+assign BC1_CLK  =  init_done ? {4{scl_o}} :  {4{sclk_init}} ;
+assign BC1_DATA =  init_done ? sd_o[15:0] :  {16{mosi_init}};
 assign BC1_LD   = {4{ld_o}}  ;
 assign BC1_TRT  = trt[3:0]   ;//边坡为 trt_ps || junke/ku_polarization 为 trt
 assign BC1_TRR  = trr[3:0]   ;
 
 
-assign BC2_SEL  = {4{sel_o}} ;
-assign BC2_CLK  = {4{scl_o}} ;
-assign BC2_DATA = sd_o[31:16];
+assign BC2_SEL  = init_done ? {4{sel_o}}  :  {4{cs_n_init}} ;
+assign BC2_CLK  = init_done ? {4{scl_o}}  :  {4{sclk_init}} ;
+assign BC2_DATA = init_done ? sd_o[31:16] :  {16{mosi_init}};
 assign BC2_LD   = {4{ld_o}}  ;
 assign BC2_TRT  = trt[7:4]   ;//边坡为 trt_ps || junke/ku_polarization 为 trt
 assign BC2_TRR  = trr[7:4]   ;
 
-assign BC_RST   = rst_o      ;
-
+assign BC_RST   = chip_reset ;
 //--------------------207sar--------------------//
-assign sel_o_a    = sel_o    ;
+assign sel_o_a    = init_done ? sel_o :  {4{cs_n_init}} ;
+assign scl_o_a    = init_done ? scl_o :  {4{sclk_init}} ;
+assign sd_o_a     = init_done ? sd_o  :  {16{mosi_init}};
 assign cmd_flag_a = cmd_flag ;
-assign scl_o_a    = scl_o    ;
-assign sd_o_a     = sd_o     ;
 assign ld_o_a     = ld_o     ;
 assign tr_o_a     = tr_en_merge && (~polarization_mode)     ;
-assign rst_o_a    = rst_o    ;
+assign rst_o_a    = chip_reset    ;
 
-assign sel_o_b    = sel_o    ;
+assign sel_o_b    = init_done ? sel_o :  {4{cs_n_init}} ;
+assign scl_o_b    = init_done ? scl_o :  {4{sclk_init}} ;
+assign sd_o_b     = init_done ? sd_o  :  {16{mosi_init}};
 assign cmd_flag_b = cmd_flag ;
-assign scl_o_b    = scl_o    ;
-assign sd_o_b     = sd_o     ;
 assign ld_o_b     = ld_o     ;
 assign tr_o_b     = tr_en_merge && polarization_mode     ;
-assign rst_o_b    = rst_o    ;
+assign rst_o_b    = chip_reset    ;
 
 //--------------------mini_sar--------------------//
-assign sel_o_h    = sel_o    ;
-assign scl_o_h    = scl_o    ;
-assign sd_o_h     = sd_o     ;
+assign sel_o_h    = init_done ? sel_o :  {4{cs_n_init}} ;
+assign scl_o_h    = init_done ? scl_o :  {4{sclk_init}} ;
+assign sd_o_h     = init_done ? sd_o  :  {16{mosi_init}};
 assign dary_o_h   = dary_o   ;
 assign ld_o_h     = ld_o     ;
 assign trt_o_h    = trt[3:0] ;
 assign trr_o_h    = trr[3:0] ;
-assign rst_o_h    = rst_o    ;
+assign rst_o_h    = chip_reset    ;
 
 // `ifdef DEBUG
 
@@ -575,7 +593,7 @@ assign rst_o_h    = rst_o    ;
     .probe_in12   (reset_sof            ), //1
     .probe_in13   (receive_period       ), //16
     .probe_in14   (wave_switch_interval ), //16
-    .probe_in15   (send_status_sel      )  //2
+    .probe_in15   (send_permission      )  //2
     );
     
 // `endif

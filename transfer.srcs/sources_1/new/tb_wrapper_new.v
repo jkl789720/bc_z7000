@@ -119,6 +119,9 @@ wire [31:0] 			  app_param0      ;
 wire [31:0] 			  app_param1      ;
 wire [31:0] 			  app_param2      ;
 
+wire [3:0] bc_mode;
+wire [1:0] send_permission;
+wire [1:0] receive_permission;
 
 
 assign  rama_rst  = 0         ;
@@ -127,8 +130,12 @@ assign  rama_addr = cnt_lane_total * 4;//总的当前写入通道数
 
 reg soft_rst;
 
+assign bc_mode = 0;
+assign send_permission = 2'b11;
+assign receive_permission = 2'b11;
+
 assign app_param2 = BEAM_POS_NUM;
-assign app_param1 = {16'd65535,8'b0,soft_rst,1'b1,4'd2,1'b0,valid_in};
+assign app_param1 = {16'd65535,3'b0,receive_permission,send_permission,1'b0,soft_rst,1'b1,bc_mode,1'b0,valid_in};
 assign app_param0 = {16'd0,9'b0,7'b0001111};//外部产生prf、动态配置、发送、内部产生tr
 
 
@@ -446,16 +453,5 @@ function [31:0] signal_expansion;
     end
 endfunction
 
-BC_TRANS u_BC_TRANS(
-    .   SYSCLK   (SYSCLK  ) ,	// 25MHz
-    .   LED      (LED     ) ,
-    .	BC_CLK   (scl_o_a  ) ,
-    .	BC_TXD   (sd_o_a  ) ,
-    .	BC_CS    (sel_o_a   ) ,//mode
-    .	BC_RXEN  (cmd_flag_a ) ,//mode
-    .	BC_TXEN  (tr_o_a ) ,//tr
-    .	BC_LATCH (ld_o_a) ,//ld
-    .	BC_RXD   (BC_RXD  )
-);
 
 endmodule

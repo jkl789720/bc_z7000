@@ -7,7 +7,8 @@ input               tr_en       ,
 input  [3:0]        bc_mode     ,
 input               sel_param   ,
 input               image_start ,
-input  [1:0]       send_status_sel ,
+input  [1:0]       send_permission ,
+input  [1:0]       receive_permission ,
 input  [15:0]       receive_period ,
 output [7:0]        trt         ,
 output [7:0]        trr         
@@ -19,14 +20,15 @@ wire trt_o_p_0;
 wire trr_o_p_0;
 wire trt_o_p_2;
 wire trr_o_p_2;
-wire trt_tmp;
-wire trr_tmp;
+wire [7:0] trt_tmp;
+wire [7:0] trr_tmp;
 
-assign trt = {{4{trt_o_p_2}},{4{trt_o_p_0}}};
-assign trr = {{4{trr_o_p_2}},{4{trr_o_p_0}}};
-
-assign trt_tmp = trt;
-assign trr_tmp = (cnt_prf == 0 && send_status_sel [0]) | (cnt_prf == 1 && send_status_sel [1])  ? trr : 0;
+assign trt_tmp = {{4{trt_o_p_2}},{4{trt_o_p_0}}};
+assign trr_tmp = {{4{trr_o_p_2}},{4{trr_o_p_0}}};
+wire test_flag;
+assign test_flag = (cnt_prf == 0 && receive_permission [0]) | (cnt_prf == 1 && receive_permission [1]);
+assign trt = (cnt_prf == 0 && receive_permission [0]) | (cnt_prf == 1 && receive_permission [1])  ? trt_tmp : 8'hff;
+assign trr = (cnt_prf == 0 && send_permission [0]) | (cnt_prf == 1 && send_permission [1])  ? trr_tmp : 0;
 
 bc_mode u_bc_mode(
 . sys_clk       (sys_clk     ),

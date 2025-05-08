@@ -22,7 +22,7 @@ module ctrl#(
     
     parameter GROUP_CHIP_NUM   = 32                              ,
     parameter GROUP_NUM        = 1                               ,
-    parameter SCLHZ            = 2_000_000                      ,
+    parameter SCLHZ            = 10_000_000                      ,
 
 
 
@@ -75,6 +75,12 @@ module ctrl#(
     input                           BC_UART_ADJUST_RX  ,
     output                          BC_UART_ADJUST_TX  
 );
+wire rst_sof;
+wire reset;
+
+
+assign tr_en_o = tr_en;
+assign bc_data_done_o = bc_data_done;
 `ifndef TB_TEST
 wire  sys_rst;
 vio_reset u_vio_reset (
@@ -83,7 +89,7 @@ vio_reset u_vio_reset (
 );
 `endif
 
-//添加了一行注\E9\87?
+//娣诲姞浜嗕竴琛屾敞閲?
 
 //PS
 wire [31:0]   rama_addr  ;
@@ -266,7 +272,7 @@ u_bc_wrapper_z7(
 
 rfsoc_2z7000 u_rfsoc_2z7000(
 . sys_clk       (sys_clk        )  ,
-. sys_rst       (sys_rst        )  ,
+. sys_rst       (reset        )  ,
 . cs_n          (cs_n           )  ,
 . scl           (scl            )  ,
 . mosi          (mosi           )  ,
@@ -280,7 +286,7 @@ rfsoc_2z7000 u_rfsoc_2z7000(
 );
 
 ram_z7_check u_ram_z7_check(
-.  sys_rst          (sys_rst         ), 
+.  sys_rst          (reset         ), 
 .  rama_clk         (ram_rfsoc_clk   ),
 .  rama_en          (ram_rfsoc_en    ),
 .  rama_wren        (ram_rfsoc_wren  ),
@@ -303,6 +309,16 @@ bram_spi_in u_bram_spi_in (
   .doutb(doutb                  )       // output wire [15 : 0] doutb
 );
 
+assign rst_sof = app_param1[7];
+reg [1:0] rst_sof_r;
+always@(posedge sys_clk)begin
+    if(!sys_rst)begin
+        rst_sof_r <= 2'b00;
+    end else begin
+        rst_sof_r <= {rst_sof_r[0],rst_sof};
+    end
+end
+assign reset = rst_sof_r[1] | sys_rst;
 
 
 `ifdef DEBUG    
@@ -358,7 +374,7 @@ check_wrapper #(
 )
  u_check_wrapper (
     .clk                     ( sys_clk            ),
-    .rst_n                   ( ~sys_rst           ),
+    .rst_n                   ( ~reset           ),
     .spi_clk                 ( spi_clk            ),
     .spi_cs_n                ( spi_cs_n           ),
     .spi_mosi                ( spi_mosi           ),
@@ -370,6 +386,21 @@ check_wrapper #(
     .dina                    ( dina_check         ),
     .douta                   ( douta_check        )
 );
+
+ila_check_back_ram_r u_u_ila_check_back_ram_r (
+	.clk(clka_check), // input wire clk
+
+
+	.probe0(ena_check), // input wire [0:0]  probe0  
+	.probe1(wea_check), // input wire [0:0]  probe1 
+	.probe2(addra_check), // input wire [3:0]  probe2 
+	.probe3(dina_check), // input wire [31:0]  probe3 
+	.probe4(douta_check) // input wire [31:0]  probe4 
+);
+
+
+
+
 
 function [31:0] signal_expansion;
     input [3:0] sig1;//绗竴涓疄鍙?

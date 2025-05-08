@@ -20,7 +20,16 @@ reg [7:0]                   cnt_cycle;
 reg [$clog2(SPI_WIDTH)-1:0] cnt_bit;
 reg work_flag;
 reg [DATA_WIDTH-1:0] wr_data_tmp;
-
+reg wr_en_r;
+wire wr_en_pos;
+//--------------上升沿提取--------------//
+always@(posedge sys_clk)begin
+    if(sys_rst)
+        wr_en_r <= 0;
+    else 
+        wr_en_r <= wr_en;
+end
+assign wr_en_pos = wr_en && !wr_en_r;
 //--------------计数器生成-----------------------//
 always @(posedge sys_clk) begin
     if(sys_rst)
@@ -53,7 +62,7 @@ end
 always @(posedge sys_clk) begin
     if(sys_rst)
         work_flag <= 0;
-    else if(wr_en)
+    else if(wr_en_pos)
         work_flag <= 1;
     else if(work_flag && cnt_bit == SPI_WIDTH - 1 && cnt_cycle == CYCLE - 1)
         work_flag <= 0;
@@ -105,7 +114,7 @@ always @(posedge sys_clk) begin
         mosi <= 0;
         wr_data_tmp <= 0;
     end
-    else if(wr_en)
+    else if(wr_en_pos)
         wr_data_tmp <= wr_data;
     else if(cnt_cycle == 0 && (cnt_bit >= 1 && cnt_bit <= DATA_WIDTH))begin
         mosi <= wr_data_tmp[DATA_WIDTH - 1];

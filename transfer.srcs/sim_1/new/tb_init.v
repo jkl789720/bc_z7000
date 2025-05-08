@@ -7,9 +7,9 @@ module tb_init#(
 reg         sys_clk     ;
 reg         sys_rst     ;
 wire        chip_reset  ;
-wire        cs_init     ;
-wire        sclk_init   ;
-wire        mosi_init   ;
+wire        cs_n     ;
+wire        sclk   ;
+wire        mosi   ;
 wire        init_done   ;
 
 
@@ -29,9 +29,9 @@ u_init_fsm(
     . sys_clk    (sys_clk   ) ,
     . sys_rst    (sys_rst   ) ,
     . chip_reset (chip_reset) ,
-    . cs_init    (cs_init   ) ,
-    . sclk_init  (sclk_init ) ,
-    . mosi_init  (mosi_init ) ,
+    . cs_n    (cs_n   ) ,
+    . sclk  (sclk ) ,
+    . mosi  (mosi ) ,
     . init_done  (init_done ) 
 );
 endmodule
