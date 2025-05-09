@@ -2,6 +2,7 @@
 // 功能  : 顶层模块，例化16个SPI接收模块和1个SPI转BRAM模块。
 //         输入为16路SPI接口（spi_clk、spi_cs_n、spi_mosi），输出为BRAM接口信号及写完成标志。
 // ============================================================================
+`include "configure.vh"
 module check_spi_to_bram_top#(
    parameter CHANNEL_NUM    = 32 ,// SPI通道数
    parameter BIT_NUM        = 106 //单spi通道bit数 
@@ -55,7 +56,7 @@ module check_spi_to_bram_top#(
         .bram_data(bram_data),
         .done     (done)
     );
-
+`ifdef DEBUG
     ila_check_back_spi u_u_ila_check_back_spi (
         .clk(clk), // input wire clk
     
@@ -66,5 +67,5 @@ module check_spi_to_bram_top#(
         .probe3(beam_pos_num    ),//32
         .probe4(rx_data[31:0]   ) //32
     );
-
+`endif
 endmodule

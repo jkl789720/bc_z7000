@@ -119,5 +119,22 @@ set_property IOSTANDARD LVCMOS33 [get_ports {prf_rf_in }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {tr_en     }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {bc_data_done}   ]
 
+##sd_back
+set_property PACKAGE_PIN U19        [get_ports {sd_back[0]  }   ]
+set_property IOSTANDARD LVCMOS33    [get_ports {sd_back[0]  }   ]
+set_property PACKAGE_PIN T15        [get_ports {sd_back[1]  }   ]
+set_property IOSTANDARD LVCMOS33    [get_ports {sd_back[1]  }   ]
+set_property PACKAGE_PIN F17        [get_ports {sd_back[2]  }   ]
+set_property IOSTANDARD LVCMOS33    [get_ports {sd_back[2]  }   ]
+set_property PACKAGE_PIN P16        [get_ports {sd_back[3]  }   ]
+set_property IOSTANDARD LVCMOS33    [get_ports {sd_back[3]  }   ]
+set_property PACKAGE_PIN W16        [get_ports {sd_back[4]  }   ]
+set_property IOSTANDARD LVCMOS33    [get_ports {sd_back[4]  }   ]
+set_property PACKAGE_PIN Y13        [get_ports {sd_back[5]  }   ]
+set_property IOSTANDARD LVCMOS33    [get_ports {sd_back[5]  }   ]
+set_property PACKAGE_PIN D20        [get_ports {sd_back[6]  }   ]
+set_property IOSTANDARD LVCMOS33    [get_ports {sd_back[6]  }   ]
+set_property PACKAGE_PIN U5         [get_ports {sd_back[7]  }   ]
+set_property IOSTANDARD LVCMOS33    [get_ports {sd_back[7]  }   ]
 
 

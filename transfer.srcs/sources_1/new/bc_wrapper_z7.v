@@ -26,10 +26,12 @@ module bc_wrapper_z7#(
 )
 (
     input 					        sys_clk 	    ,
-    input 					        sys_rst 	    ,
+    input 					        sys_rst 	    ,//上电只复位一次，用sys_rst
     input                           prf_pin_in      ,
     input                           prf_rf_in       ,
     input                           tr_en           ,
+
+    input  [7:0]                    sd_back         ,
 
 
     input                	        rama_clk        ,
@@ -48,6 +50,22 @@ module bc_wrapper_z7#(
     input  [31:0]                   bram_tx_sel_din ,
     output [31:0]                   bram_tx_sel_dout,
     output                          bram_tx_sel_rst ,
+
+    input                           ram_bc_init_clk    ,
+    input                           ram_bc_init_en     ,
+    input  [3:0]                    ram_bc_init_we     ,
+    input  [31:0]                   ram_bc_init_addr   ,
+    input  [31:0]                   ram_bc_init_din    ,
+    output [31:0]                   ram_bc_init_dout   ,
+    output                          ram_bc_init_rst    ,
+
+    input                           ram_bc_init_clk_back  ,
+    input                           ram_bc_init_en_back   ,
+    input  [3:0]                    ram_bc_init_we_back   ,
+    input  [31:0]                   ram_bc_init_addr_back ,
+    input  [31:0]                   ram_bc_init_din_back  ,
+    output [31:0]                   ram_bc_init_dout_back ,
+    output                          ram_bc_init_rst_back  ,
 
 
     input   [31:0] 			        app_param0	    ,
@@ -74,9 +92,20 @@ module bc_wrapper_z7#(
     output  [3:0]                   BC2_TRR      ,   
 
 //BC_RST
-    output                          BC_RST       
+    output                          BC_RST       ,
+// output                            sel_o_h        ,
+// output                            scl_o_h    	 , 
+// output [GROUP_CHIP_NUM-1:0]       sd_o_h         ,
+// output                            ld_o_h         ,
+// output                            dary_o_h       ,
+// output [3:0]                      trt_o_h        ,
+// output [3:0]                      trr_o_h        ,
+// output                            rst_o_h        ,
+output                              init_done            
 
 );
+// assign init_done = 1;//禁用初始化
+
 wire reset;
 //-------------------wire declare----------------------//
 //spi
@@ -100,8 +129,10 @@ wire                       valid_in         ;
 wire [31:0]                beam_pos_num     ;
 wire [15:0]                receive_period   ;
 wire [15:0]                wave_switch_interval;
-wire [1:0]                send_permission;
-wire [1:0]                receive_permission;
+wire [1:0]                 send_permission;
+wire [1:0]                 receive_permission;
+wire                       init_start;
+wire                       init_read_req;
 
 wire                       temper_ready     ;
 wire                       temper_en        ;
@@ -123,10 +154,11 @@ wire                       spi_done             ;//一个组发送完，而不�
 wire                       ld_done              ;
 wire                       now_beam_send_done   ;
 
-wire                       cs_n_init            ;
-wire                       sclk_init            ;
-wire                       mosi_init            ;
-wire                       init_done            ;
+wire [7:0]                 chip_reset           ;
+wire [7:0]                 cs_n_init            ;
+wire [7:0]                 sclk_init            ;
+wire [31:0]                mosi_init            ;
+
 
 wire rd_done = 0;
 
@@ -136,8 +168,6 @@ wire                       cmd_flag      ;
 wire [31:0]                sd_o          ;
 wire                       dary_o        ;
 wire                       ld_o          ;
-wire                       trt_o         ;
-wire                       trr_o         ;
 wire                       rst_o         ;
 
 wire  [7:0]                temper_data0  ;
@@ -236,6 +266,9 @@ wire                            rst_o_h        ;
 
 // //BC_RST
 // wire                          BC_RST       ; 
+
+reg [7:0] sd_back_r [1:0];
+
 //地址分配
 assign bc_top_addr    = (((GROUP_NUM*GROUP_CHIP_NUM) << 4))*BEAM_NUM;
 assign delay_ram_clk  = rama_clk;
@@ -298,6 +331,8 @@ assign rst_soft             = app_param1_r[1][7];
 assign image_start          = app_param1_r[1][8];
 assign send_permission      = app_param1_r[1][10:9];
 assign receive_permission   = app_param1_r[1][12:11];
+assign init_start           = app_param1_r[1][13];
+assign init_read_req        = app_param1_r[1][14];
 assign receive_period       = app_param1_r[1][31:16];
 
 assign beam_pos_num	    = app_param2_r[1]   ;
@@ -305,7 +340,11 @@ assign beam_pos_num	    = app_param2_r[1]   ;
 assign prf = prf_mode ? prf_pin_in : prf_rf_in;
 assign reset = sys_rst || rst_soft || (~init_done);
 
-		
+always@(posedge sys_clk)begin
+    sd_back_r[0] <= sd_back;
+    sd_back_r[1] <= sd_back_r[0];
+end
+
 
 send_data_gen#(
     .LANE_BIT         (LANE_BIT         ),
@@ -466,69 +505,90 @@ bc_txen_expand u_bc_txen_expand(
 .  trr          (trr        )
 );
 
-
+//上电只复位一次，用sys_rst
 init_fsm#(
     . SYSHZ                 (SYSHZ          )  ,
     . SCLHZ                 (SCLHZ          )  ,
     . INIT_REG_NUM          (16             )  
 )
 u_init_fsm(
-    . sys_clk       (sys_clk    ) ,
-    . sys_rst       (sys_rst    ) ,
-    . chip_reset    (chip_reset ) ,
-    . cs_n          (cs_n_init  ) ,
-    . sclk          (sclk_init  ) ,
-    . mosi          (mosi_init  ) ,
-    . init_done     (init_done  ) 
+    . sys_clk       (sys_clk            ) ,
+    . sys_rst       (sys_rst            ) ,
+    . chip_reset    (chip_reset         ) ,
+
+    . init_start    (init_start         ) ,
+    . init_read_req    (init_read_req         ) ,
+    . ram_bc_init_clk  (ram_bc_init_clk ),
+    . ram_bc_init_en   (ram_bc_init_en  ),
+    . ram_bc_init_we   (ram_bc_init_we  ),
+    . ram_bc_init_addr (ram_bc_init_addr),
+    . ram_bc_init_din  (ram_bc_init_din ),
+    . ram_bc_init_dout (ram_bc_init_dout),
+    . ram_bc_init_rst  (ram_bc_init_rst ),
+
+    . ram_bc_init_clk_back  (ram_bc_init_clk_back ),
+    . ram_bc_init_en_back   (ram_bc_init_en_back  ),
+    . ram_bc_init_we_back   (ram_bc_init_we_back  ),
+    . ram_bc_init_addr_back (ram_bc_init_addr_back),
+    . ram_bc_init_din_back  (ram_bc_init_din_back ),
+    . ram_bc_init_dout_back (ram_bc_init_dout_back),
+    . ram_bc_init_rst_back  (ram_bc_init_rst_back ),
+    
+    . cs_n          (cs_n_init          ) ,
+    . sclk          (sclk_init          ) ,
+    . miso          (sd_back_r[1]       ) ,
+    . mosi          (mosi_init          ) ,
+    . init_done     (init_done          )
 );
 
 //------------mimo or junke--------------------//
-assign BC1_SEL  =  init_done ? {4{sel_o}} :  {4{cs_n_init}} ;
-assign BC1_CLK  =  init_done ? {4{scl_o}} :  {4{sclk_init}} ;
-assign BC1_DATA =  init_done ? sd_o[15:0] :  {16{mosi_init}};
+assign BC1_SEL  =  init_done ? {4{sel_o}} :  cs_n_init[3:0];
+assign BC1_CLK  =  init_done ? {4{scl_o}} :  sclk_init[3:0];
+assign BC1_DATA =  init_done ? sd_o[15:0] :  mosi_init[15:0];
 assign BC1_LD   = {4{ld_o}}  ;
 assign BC1_TRT  = trt[3:0]   ;//边坡为 trt_ps || junke/ku_polarization 为 trt
 assign BC1_TRR  = trr[3:0]   ;
 
 
-assign BC2_SEL  = init_done ? {4{sel_o}}  :  {4{cs_n_init}} ;
-assign BC2_CLK  = init_done ? {4{scl_o}}  :  {4{sclk_init}} ;
-assign BC2_DATA = init_done ? sd_o[31:16] :  {16{mosi_init}};
+assign BC2_SEL  = init_done ? {4{sel_o}}  :  cs_n_init[7:4];
+assign BC2_CLK  = init_done ? {4{scl_o}}  :  sclk_init[7:4];
+assign BC2_DATA = init_done ? sd_o[31:16] :  mosi_init[31:16];
 assign BC2_LD   = {4{ld_o}}  ;
 assign BC2_TRT  = trt[7:4]   ;//边坡为 trt_ps || junke/ku_polarization 为 trt
 assign BC2_TRR  = trr[7:4]   ;
 
 assign BC_RST   = chip_reset ;
 //--------------------207sar--------------------//
-assign sel_o_a    = init_done ? sel_o :  {4{cs_n_init}} ;
-assign scl_o_a    = init_done ? scl_o :  {4{sclk_init}} ;
-assign sd_o_a     = init_done ? sd_o  :  {16{mosi_init}};
+assign sel_o_a    = init_done ? sel_o :  cs_n_init[3:0];
+assign scl_o_a    = init_done ? scl_o :  sclk_init[3:0];
+assign sd_o_a     = init_done ? sd_o  :  mosi_init[15:0];
 assign cmd_flag_a = cmd_flag ;
 assign ld_o_a     = ld_o     ;
 assign tr_o_a     = tr_en_merge && (~polarization_mode)     ;
 assign rst_o_a    = chip_reset    ;
 
-assign sel_o_b    = init_done ? sel_o :  {4{cs_n_init}} ;
-assign scl_o_b    = init_done ? scl_o :  {4{sclk_init}} ;
-assign sd_o_b     = init_done ? sd_o  :  {16{mosi_init}};
+assign sel_o_b    = init_done ? sel_o :  cs_n_init[3:0];
+assign scl_o_b    = init_done ? scl_o :  sclk_init[3:0];
+assign sd_o_b     = init_done ? sd_o  :  mosi_init[15:0];
 assign cmd_flag_b = cmd_flag ;
 assign ld_o_b     = ld_o     ;
 assign tr_o_b     = tr_en_merge && polarization_mode     ;
 assign rst_o_b    = chip_reset    ;
 
 //--------------------mini_sar--------------------//
-assign sel_o_h    = init_done ? sel_o :  {4{cs_n_init}} ;
-assign scl_o_h    = init_done ? scl_o :  {4{sclk_init}} ;
-assign sd_o_h     = init_done ? sd_o  :  {16{mosi_init}};
+assign sel_o_h    = init_done ? sel_o :  cs_n_init[3:0];
+assign scl_o_h    = init_done ? scl_o :  sclk_init[3:0];
+assign sd_o_h     = init_done ? sd_o  :  mosi_init[15:0];
 assign dary_o_h   = dary_o   ;
 assign ld_o_h     = ld_o     ;
 assign trt_o_h    = trt[3:0] ;
 assign trr_o_h    = trr[3:0] ;
 assign rst_o_h    = chip_reset    ;
 
-// `ifdef DEBUG
+`ifdef DEBUG
 
 //7000和rfsoc不同
+//z7000
     ila_trt u_ila_trt (
         .clk(sys_clk), // input wire clk
 
@@ -555,6 +615,17 @@ assign rst_o_h    = chip_reset    ;
         .probe19    (image_start), // 1
         .probe20    (sys_rst    )  // 1
     );
+//rfsoc
+    // ila_trt u_ila_trt (
+    //     .clk(sys_clk), // input wire clk
+    //     .probe0     (trt_o_h    ), // 4
+    //     .probe1     (trr_o_h    ), // 4
+    //     .probe2     (prf        ), // 1
+    //     .probe3     (tr_en_merge), // 1
+    //     .probe4     (bc_mode    ), // 3
+    //     .probe5     (image_start), // 1
+    //     .probe6     (sys_rst    )  // 1
+    // );
     wire [31:0] sd;
     assign sd = sd_o;
     ila_spi_bc_code u_ila_spi_bc_code (
@@ -590,11 +661,14 @@ assign rst_o_h    = chip_reset    ;
     .probe_in9    (temper_req           ),//1
     .probe_in10   (bc_mode              ),//1
     .probe_in11   (sel_param            ),//1
-    .probe_in12   (reset_sof            ), //1
+    .probe_in12   (rst_soft             ), //1
     .probe_in13   (receive_period       ), //16
     .probe_in14   (wave_switch_interval ), //16
-    .probe_in15   (send_permission      )  //2
+    .probe_in15   (send_permission      ),  //2
+    .probe_in16   (receive_permission   ),  //2
+    .probe_in17   (init_start           ),  //1
+    .probe_in18   (init_read_req        )   //1
     );
     
-// `endif
+`endif
 endmodule

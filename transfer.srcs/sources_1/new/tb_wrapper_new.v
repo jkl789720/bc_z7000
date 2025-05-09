@@ -27,8 +27,9 @@ module tb_wrapper_new#(
 
 localparam LANE_NUM = 64*2;
 localparam BEAM_POS_NUM =  4;
-localparam WRITE_TIMES = 3;
+localparam WRITE_TIMES = 1;
 localparam TOTAL_LANE_NUM = LANE_NUM * BEAM_POS_NUM;
+localparam INIT_REG_NUM = 128;//多写一个方便回读
 
 
 
@@ -71,7 +72,49 @@ wire [31:0]     bram_tx_sel_din ;
 wire [31:0]     bram_tx_sel_dout;
 wire            bram_tx_sel_rst ;
 
+wire            ram_bc_init_clk    ;
+wire            ram_bc_init_en     ;
+wire  [3:0]     ram_bc_init_we     ;
+wire  [31:0]    ram_bc_init_addr   ;
+wire  [31:0]    ram_bc_init_din    ;
+wire [31:0]     ram_bc_init_dout   ;
+wire            ram_bc_init_rst    ;
 
+wire            ram_bc_init_clk_back    ;
+wire            ram_bc_init_en_back     ;
+wire  [3:0]     ram_bc_init_we_back     ;
+wire  [31:0]    ram_bc_init_addr_back   ;
+wire  [31:0]    ram_bc_init_din_back    ;
+wire [31:0]     ram_bc_init_dout_back   ;
+wire            ram_bc_init_rst_back    ;
+reg [7:0]       cnt_init;
+reg [31:0]      mem_value [INIT_REG_NUM-1:0];
+wire            init_start;
+wire            init_done;
+assign ram_bc_init_clk = sys_clk;
+assign ram_bc_init_en  = 1'b1;
+
+
+//----------------初始化ram生成------------------//
+
+initial begin
+        $readmemh("D:/code/verilog/data/mem_value.txt", mem_value);  // 从 hex 文件加载数据
+end
+
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        cnt_init <= 0;
+    else if(cnt_init == INIT_REG_NUM)
+        cnt_init <= INIT_REG_NUM;
+    else
+        cnt_init <= cnt_init + 1;
+end
+
+assign ram_bc_init_we = cnt_init <= INIT_REG_NUM - 1 ? 4'hf : 0;
+assign ram_bc_init_addr = cnt_init << 2;
+assign ram_bc_init_din = mem_value[cnt_init];
+
+assign init_start = cnt_init == INIT_REG_NUM;
 
 always @(posedge sys_clk) begin
     if(sys_rst)
@@ -96,7 +139,7 @@ assign bram_tx_sel_din = {8'd0,8'b1111_0000,8'd0,8'b0000_1111};
 
 
 
-
+wire [7:0] sd_back;
 reg  [31 : 0]               wr_cnt_lane , wr_cnt_beam           ;//通道计数，波位计数
 wire                        add_wr_cnt_lane , end_wr_cnt_lane   ;
 wire                        add_wr_cnt_beam , end_wr_cnt_beam   ;
@@ -119,24 +162,33 @@ wire [31:0] 			  app_param0      ;
 wire [31:0] 			  app_param1      ;
 wire [31:0] 			  app_param2      ;
 
+wire [15:0] wave_switch_interval;
 wire [3:0] bc_mode;
 wire [1:0] send_permission;
 wire [1:0] receive_permission;
+wire [15:0] receive_peropd;
+reg soft_rst;
+wire init_read_req;
 
+
+assign sd_back = {BC2_DATA[12],BC2_DATA[8],BC2_DATA[4],BC2_DATA[0],BC1_DATA[12],BC1_DATA[8],BC1_DATA[4],BC1_DATA[0]};
 
 assign  rama_rst  = 0         ;
 assign  rama_en   = 1         ;
 assign  rama_addr = cnt_lane_total * 4;//总的当前写入通道数
 
-reg soft_rst;
+
 
 assign bc_mode = 0;
 assign send_permission = 2'b11;
 assign receive_permission = 2'b11;
+assign wave_switch_interval = 1;
+assign receive_peropd = 5000;
+assign init_read_req = 1;
 
 assign app_param2 = BEAM_POS_NUM;
-assign app_param1 = {16'd65535,3'b0,receive_permission,send_permission,1'b0,soft_rst,1'b1,bc_mode,1'b0,valid_in};
-assign app_param0 = {16'd0,9'b0,7'b0001111};//外部产生prf、动态配置、发送、内部产生tr
+assign app_param1 = {receive_peropd,1'b0,init_read_req,init_start,receive_permission,send_permission,1'b0,soft_rst,1'b1,bc_mode,1'b0,valid_in};
+assign app_param0 = {wave_switch_interval,9'b0,7'b0001111};//外部产生prf、动态配置、发送、内部产生tr
 
 
 
@@ -193,7 +245,10 @@ always@(*)begin
     else 
         case (c_state)
             IDLE: begin
-                n_state = WRITE;
+                if(init_done)
+                    n_state = WRITE;
+                else
+                    n_state = c_state;
             end
             WRITE :begin
                 if(w2r)
@@ -356,6 +411,7 @@ u_bc_wrapper_z7(
     . sys_rst 	        (sys_rst 	        )       ,
     . prf_pin_in        (prf_pin_in         )       ,
     . tr_en             (tr_en              )       ,
+    . sd_back           (sd_back            )       ,
     . rama_clk          (rama_clk           )       ,
 	. rama_en           (rama_en            )       ,
 	. rama_we           (rama_we            )       ,
@@ -371,6 +427,22 @@ u_bc_wrapper_z7(
     . bram_tx_sel_din   (bram_tx_sel_din    )  ,
     . bram_tx_sel_dout  (bram_tx_sel_dout   )  ,
     . bram_tx_sel_rst   (bram_tx_sel_rst    )  ,
+
+    . ram_bc_init_clk   (ram_bc_init_clk    )       ,
+    . ram_bc_init_en    (ram_bc_init_en     )       ,
+    . ram_bc_init_we    (ram_bc_init_we     )       ,
+    . ram_bc_init_addr  (ram_bc_init_addr   )       ,
+    . ram_bc_init_din   (ram_bc_init_din    )       ,
+    . ram_bc_init_dout  (ram_bc_init_dout   )       ,
+    . ram_bc_init_rst   (ram_bc_init_rst    )       ,
+
+    . ram_bc_init_clk_back   (ram_bc_init_clk_back )       ,
+    . ram_bc_init_en_back    (ram_bc_init_en_back  )       ,
+    . ram_bc_init_we_back    (ram_bc_init_we_back  )       ,
+    . ram_bc_init_addr_back  (ram_bc_init_addr_back)       ,
+    . ram_bc_init_din_back   (ram_bc_init_din_back )       ,
+    . ram_bc_init_dout_back  (ram_bc_init_dout_back)       ,
+    . ram_bc_init_rst_back   (ram_bc_init_rst_back )       ,
     
     . app_param0        (app_param0         )  	    ,
     . app_param1        (app_param1         )  	    ,
@@ -389,7 +461,8 @@ u_bc_wrapper_z7(
     . BC2_LD            (BC2_LD             )       ,
     . BC2_TRT           (BC2_TRT            )       ,
     . BC2_TRR           (BC2_TRR            )       ,
-    . BC_RST            (BC_RST             )       
+    . BC_RST            (BC_RST             )       , 
+    . init_done         (init_done          )        
 );
 //-------------------------校验----------------------//
 //---------------------娉㈡帶鐮佹楠?------------------------//

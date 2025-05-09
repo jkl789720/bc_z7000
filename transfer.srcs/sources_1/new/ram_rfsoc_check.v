@@ -1,3 +1,4 @@
+`include "configure.vh"
 `timescale 1ns / 1ps
 module ram_rfsoc_check(
 input                   sys_clk         , 
@@ -123,7 +124,7 @@ end
 //输入角度
 assign azi_angle   = rama_din_r[1][15:0];
 assign pitch_angle = rama_din_r[1][31:16];
-
+`ifdef DEBUG
 ila_ram_rfsoc_check u_ila_ram_rfsoc_check (
 	.clk(sys_clk                ),
 	.probe0(add_azi             ),
@@ -133,4 +134,5 @@ ila_ram_rfsoc_check u_ila_ram_rfsoc_check (
 	.probe4(azi_angle_local     ),
 	.probe5(check_fail_times    ) 
 );
+`endif
 endmodule

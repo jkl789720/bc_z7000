@@ -1,21 +1,24 @@
 `timescale 1ns / 1ps
 module spi2bram#
 (
-    parameter FRAM_BIT_NUM = 24
+    parameter FRAM_BIT_NUM   = 45        ,
+    parameter RAM_ADDR_WITDH = 13        ,
+    parameter SYS_HZ         = 50_000_000,
+    parameter SCL_HZ         = 10_000_000
 )
 (
     input                               sys_clk                     ,
-    input                               sys_rst                       ,
+    input                               sys_rst                     ,
     
-    input                               cs_n                        ,//是否需要打拍寄存降低亚稳态传播的概率?
-    input                               scl                         ,//是否需要打拍寄存降低亚稳态传播的概率?
-    input                               mosi                        ,//是否需要打拍寄存降低亚稳态传播的概率?
+    input                               cs_n                        ,
+    input                               scl                         ,
+    input                               mosi                        ,
 
     output                              ram_clk                     ,
     output                              ram_en                      ,
     output                              ram_wren                    ,
-    output [7:0]                        ram_addr                    ,
-    output [15:0]                       ram_din
+    output [RAM_ADDR_WITDH - 1:0]       ram_addr                    ,
+    output [31:0]                       ram_din
 );
 
 
@@ -27,10 +30,10 @@ wire cs_n_neg;
 
 wire        scl_pos;
 
-reg [7:0]   cnt_bit;
+reg [$clog2(FRAM_BIT_NUM)-1:0]   cnt_bit;//6
 wire        add_cnt_bit,end_cnt_bit;
 
-reg [23:0]  shift_reg;
+reg [FRAM_BIT_NUM-1:0]  shift_reg;
 reg         data_valid;
 
 assign scl_pos = ~scl_r[1] && scl_r[0];
@@ -86,10 +89,10 @@ always @(posedge sys_clk) begin
 end
 
 
-assign ram_clk  =  sys_clk          ;
-assign ram_en   =  1                ;
-assign ram_wren =  data_valid       ;
-assign ram_addr =  shift_reg[23:16] ;
-assign ram_din  =  shift_reg[15:0]  ;
+assign ram_clk  =  sys_clk                          ;
+assign ram_en   =  1                                ;
+assign ram_wren =  data_valid                       ;
+assign ram_addr =  shift_reg[FRAM_BIT_NUM - 1:32]   ;
+assign ram_din  =  shift_reg[31:0]                  ;
 
 endmodule

@@ -1,3 +1,4 @@
+`include "configure.vh"
 `timescale 1ns / 1ps
 module check_wrapper#(
     parameter CHANNEL_NUM    = 32 ,// SPI通道数
@@ -56,7 +57,7 @@ check_spi_to_bram_top#(
     . bram_data (bram_data),
     . done      (done     )
 );
-
+`ifdef DEBUG
 ila_check_back_ram_w u_u_ila_check_back_ram_w (
 	.clk(clk), // input wire clk
 
@@ -66,7 +67,7 @@ ila_check_back_ram_w u_u_ila_check_back_ram_w (
 	.probe2(bram_data   ),//32
 	.probe3(done        ) //1
 );
-
+`endif
 /*
 // check_wrapper Inputs
 reg   [CHANNEL_NUM - 1:0]  spi_clk;

@@ -30,7 +30,7 @@ wire trt_o;
 wire trr_o;
 
 wire                bram_tx_sel_en_read   ;   
-wire [3 : 0]        bram_tx_sel_addr_read ;  
+wire [31 : 0]        bram_tx_sel_addr_read ;  
 wire [15 : 0]       bram_tx_sel_dout_read ;  
 
 assign tx_sel = bram_tx_sel_dout_read[7:0];
@@ -55,18 +55,18 @@ assign bram_tx_sel_addr_read = beam_pos_num == 1 ? 0 : beam_pos_cnt -1;
 
 
 bram_tx_sel u_bram_tx_sel (
-  .clka (bram_tx_sel_clk        ),      // input wire clka
-  .ena  (bram_tx_sel_en         ),      // input wire ena
-  .wea  (bram_tx_sel_we[0]      ),      // input wire [0 : 0] wea
-  .addra(bram_tx_sel_addr >> 2  ),      // input wire [2 : 0] addra
-  .dina (bram_tx_sel_din        ),      // input wire [31 : 0] dina
-  .douta(bram_tx_sel_dout       ),      // output wire [31 : 0] douta
-  .clkb (sys_clk                ),      // input wire clkb
-  .enb  (bram_tx_sel_en_read    ),      // input wire enb
-  .web  (0                      ),      // input wire [0 : 0] web
-  .addrb(bram_tx_sel_addr_read  ),      // input wire [3 : 0] addrb
-  .dinb (0                      ),      // input wire [15 : 0] dinb
-  .doutb(bram_tx_sel_dout_read  )       // output wire [15 : 0] doutb
+  .clka (bram_tx_sel_clk        ),      
+  .ena  (bram_tx_sel_en         ),      
+  .wea  (bram_tx_sel_we[0]      ),      
+  .addra(bram_tx_sel_addr >> 2  ),      
+  .dina (bram_tx_sel_din        ),      
+  .douta(bram_tx_sel_dout       ),      
+  .clkb (sys_clk                ),      
+  .enb  (bram_tx_sel_en_read    ),      
+  .web  (0                      ),      
+  .addrb(bram_tx_sel_addr_read  ),      
+  .dinb (0                      ),      
+  .doutb(bram_tx_sel_dout_read  )       
 );
 
 single2double#(

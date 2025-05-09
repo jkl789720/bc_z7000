@@ -1,3 +1,4 @@
+`include "configure.vh"
 `timescale 1ns / 1ps
 module ram_z7_check(
 input                   sys_rst         , 
@@ -159,7 +160,7 @@ always @(posedge rama_clk) begin
     else
         pitch_angle <= pitch_angle;
 end
-
+`ifdef DEBUG
 ila_ram_rfsoc_check u_ila_ram_rfsoc_check (
 	.clk(rama_clk                ),
 	.probe0(add_azi             ),
@@ -169,4 +170,5 @@ ila_ram_rfsoc_check u_ila_ram_rfsoc_check (
 	.probe4(azi_angle_local     ),
 	.probe5(check_fail_times    ) 
 );
+`endif
 endmodule
