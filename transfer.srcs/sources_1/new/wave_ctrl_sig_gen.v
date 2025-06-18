@@ -133,6 +133,20 @@ assign tr_o_input = tr_max && tr_en_r[1];
 
 assign tr_en_merge = tr_mode ? tr_o_input: tr_o_local;
 
+ila_test u_ila_test(
+.clk(sys_clk), // input wire clk
+.probe0 (1),   
+.probe1 (tr_en),   
+.probe2 (tr_en_merge),   
+.probe3 (tr_mode), 
+.probe4 (tr_o_input), 
+.probe5 (tr_o_local), 
+.probe6 (tr_max), 
+.probe7 (single_lane),
+.probe8 (cnt_close),
+.probe9 (reset)
+);
+
 
 
 

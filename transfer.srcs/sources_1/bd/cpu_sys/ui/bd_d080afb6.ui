@@ -1,0 +1,94 @@
+{
+   "ActiveEmotionalView":"Default View",
+   "Default View_ScaleFactor":"0.260963",
+   "Default View_TopLeft":"-1682,-11",
+   "ExpandedHierarchyInLayout":"",
+   "guistr":"# # String gsaved with Nlview 7.0r6  2020-01-29 bk=1.5227 VDI=41 GEI=36 GUI=JA:10.0 non-TLS-threadsafe
+#  -string -flagsOSRD
+preplace port DDR -pg 1 -lvl 4 -x 1310 -y 300 -defaultsOSRD
+preplace port FIXED_IO -pg 1 -lvl 4 -x 1310 -y 600 -defaultsOSRD
+preplace port bc_uart_adjust -pg 1 -lvl 4 -x 1310 -y 1370 -defaultsOSRD
+preplace port rama -pg 1 -lvl 4 -x 1310 -y 380 -defaultsOSRD
+preplace port ram_bc_angle -pg 1 -lvl 4 -x 1310 -y 220 -defaultsOSRD
+preplace port bram_tx_sel -pg 1 -lvl 4 -x 1310 -y 680 -defaultsOSRD
+preplace port ram_bc_code_read -pg 1 -lvl 4 -x 1310 -y 1060 -defaultsOSRD
+preplace port ram_bc_init -pg 1 -lvl 4 -x 1310 -y 1240 -defaultsOSRD
+preplace port ram_bc_init_back -pg 1 -lvl 4 -x 1310 -y 960 -defaultsOSRD
+preplace portBus app_param0 -pg 1 -lvl 4 -x 1310 -y 1530 -defaultsOSRD
+preplace portBus app_param1 -pg 1 -lvl 4 -x 1310 -y 1550 -defaultsOSRD
+preplace portBus app_param2 -pg 1 -lvl 4 -x 1310 -y 1570 -defaultsOSRD
+preplace portBus app_param3 -pg 1 -lvl 4 -x 1310 -y 1590 -defaultsOSRD
+preplace portBus app_param4 -pg 1 -lvl 4 -x 1310 -y 1610 -defaultsOSRD
+preplace portBus app_param5 -pg 1 -lvl 4 -x 1310 -y 1630 -defaultsOSRD
+preplace portBus app_param6 -pg 1 -lvl 4 -x 1310 -y 1650 -defaultsOSRD
+preplace portBus app_param7 -pg 1 -lvl 4 -x 1310 -y 1670 -defaultsOSRD
+preplace portBus app_status0 -pg 1 -lvl 0 -x -10 -y 1520 -defaultsOSRD
+preplace portBus app_status1 -pg 1 -lvl 0 -x -10 -y 1540 -defaultsOSRD
+preplace portBus app_status2 -pg 1 -lvl 0 -x -10 -y 1560 -defaultsOSRD
+preplace portBus app_status3 -pg 1 -lvl 0 -x -10 -y 1580 -defaultsOSRD
+preplace portBus app_status4 -pg 1 -lvl 0 -x -10 -y 1600 -defaultsOSRD
+preplace portBus app_status5 -pg 1 -lvl 0 -x -10 -y 1620 -defaultsOSRD
+preplace portBus app_status6 -pg 1 -lvl 0 -x -10 -y 1640 -defaultsOSRD
+preplace portBus app_status7 -pg 1 -lvl 0 -x -10 -y 1660 -defaultsOSRD
+preplace inst processing_system7_0 -pg 1 -lvl 1 -x 220 -y 630 -defaultsOSRD
+preplace inst ps7_0_axi_periph -pg 1 -lvl 2 -x 620 -y 640 -defaultsOSRD
+preplace inst rst_ps7_0_50M -pg 1 -lvl 1 -x 220 -y 840 -defaultsOSRD
+preplace inst axi_uartlite_adjust -pg 1 -lvl 3 -x 1070 -y 1480 -defaultsOSRD
+preplace inst axi_bram_ctrl_bc_code -pg 1 -lvl 3 -x 1070 -y 380 -defaultsOSRD
+preplace inst axilite_slave_0 -pg 1 -lvl 3 -x 1070 -y 1700 -defaultsOSRD
+preplace inst axi_bram_ctrl_bc_angle -pg 1 -lvl 3 -x 1070 -y 220 -defaultsOSRD
+preplace inst axi_bram_ctrl_tx_sel -pg 1 -lvl 3 -x 1070 -y 680 -defaultsOSRD
+preplace inst axi_bram_ctrl_bc_code_read -pg 1 -lvl 3 -x 1070 -y 1060 -defaultsOSRD
+preplace inst system_ila_bc_code_write -pg 1 -lvl 3 -x 1070 -y 520 -defaultsOSRD
+preplace inst system_ila_bc_code_read -pg 1 -lvl 3 -x 1070 -y 820 -defaultsOSRD
+preplace inst system_ila_bc_angle -pg 1 -lvl 3 -x 1070 -y 80 -defaultsOSRD
+preplace inst axi_bram_ctrl_init -pg 1 -lvl 3 -x 1070 -y 1340 -defaultsOSRD
+preplace inst system_ila_init -pg 1 -lvl 3 -x 1070 -y 1200 -defaultsOSRD
+preplace inst axi_bram_ctrl_init_back -pg 1 -lvl 2 -x 620 -y 960 -defaultsOSRD
+preplace netloc processing_system7_0_FCLK_CLK0 1 0 3 10 520 430 360 830
+preplace netloc processing_system7_0_FCLK_RESET0_N 1 0 2 20 740 400
+preplace netloc rst_ps7_0_50M_peripheral_aresetn 1 1 2 440 370 850
+preplace netloc axilite_slave_0_app_param0 1 3 1 1220J 1530n
+preplace netloc axilite_slave_0_app_param1 1 3 1 1230J 1550n
+preplace netloc axilite_slave_0_app_param2 1 3 1 1240J 1570n
+preplace netloc axilite_slave_0_app_param3 1 3 1 1250J 1590n
+preplace netloc axilite_slave_0_app_param4 1 3 1 1260J 1610n
+preplace netloc axilite_slave_0_app_param5 1 3 1 1270J 1630n
+preplace netloc axilite_slave_0_app_param6 1 3 1 1280J 1650n
+preplace netloc axilite_slave_0_app_param7 1 3 1 1290J 1670n
+preplace netloc app_status0_0_1 1 0 3 NJ 1520 NJ 1520 860J
+preplace netloc app_status1_0_1 1 0 3 NJ 1540 NJ 1540 820J
+preplace netloc app_status2_0_1 1 0 3 NJ 1560 NJ 1560 810J
+preplace netloc app_status3_0_1 1 0 3 NJ 1580 NJ 1580 800J
+preplace netloc app_status4_0_1 1 0 3 NJ 1600 NJ 1600 790J
+preplace netloc app_status5_0_1 1 0 3 NJ 1620 NJ 1620 780J
+preplace netloc app_status6_0_1 1 0 3 NJ 1640 NJ 1640 770J
+preplace netloc app_status7_0_1 1 0 3 NJ 1660 NJ 1660 760J
+preplace netloc ps7_0_axi_periph_M07_AXI 1 1 2 450 380 780
+preplace netloc axi_bram_ctrl_0_BRAM_PORTA1 1 2 2 NJ 960 NJ
+preplace netloc ps7_0_axi_periph_M05_AXI 1 2 1 880 670n
+preplace netloc processing_system7_0_DDR 1 1 3 420J 300 NJ 300 NJ
+preplace netloc processing_system7_0_FIXED_IO 1 1 3 400J 0 NJ 0 1220J
+preplace netloc ps7_0_axi_periph_M04_AXI 1 2 1 900 650n
+preplace netloc axi_uartlite_0_UART 1 3 1 1220J 1370n
+preplace netloc ps7_0_axi_periph_M02_AXI 1 2 1 870 610n
+preplace netloc ps7_0_axi_periph_M00_AXI 1 2 1 840 360n
+preplace netloc ps7_0_axi_periph_M06_AXI 1 2 1 860 690n
+preplace netloc ps7_0_axi_periph_M01_AXI 1 2 1 890 590n
+preplace netloc ps7_0_axi_periph_M03_AXI 1 2 1 790 60n
+preplace netloc axi_bram_ctrl_bc_angle_BRAM_PORTA 1 3 1 NJ 220
+preplace netloc axi_bram_ctrl_0_BRAM_PORTA 1 3 1 NJ 380
+preplace netloc axi_bram_ctrl_init_BRAM_PORTA 1 3 1 1220J 1240n
+preplace netloc axi_bram_ctrl_bc_code_read_BRAM_PORTA 1 3 1 NJ 1060
+preplace netloc processing_system7_0_M_AXI_GP0 1 1 1 410 440n
+preplace netloc axi_bram_ctrl_tx_sel_BRAM_PORTA 1 3 1 NJ 680
+levelinfo -pg 1 -10 220 620 1070 1310
+pagesize -pg 1 -db -bbox -sgen -190 -20 1480 1860
+"
+}
+{
+   "da_axi4_cnt":"16",
+   "da_bram_cntlr_cnt":"4",
+   "da_clkrst_cnt":"5",
+   "da_ps7_cnt":"1"
+}

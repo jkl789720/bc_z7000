@@ -1,7 +1,7 @@
 `include "configure.vh"
 //功能：tr信号一分多，又或者说是tr模式控制
 `timescale 1ns / 1ps
-module bc_wrapper_z7#(
+module bc_wrapper#(
     `ifndef G3
     parameter LANE_BIT         = 20                              ,
     parameter FRAME_DATA_BIT   = 80                              ,
@@ -207,6 +207,8 @@ wire [7:0] trr;
 wire [23:0] beam_pos_cnt;
 
 wire tr_en_merge;
+
+wire cnt_prf;
 
 
 reg [31:0]  app_param0_r [1:0];
@@ -504,7 +506,8 @@ bc_txen_expand u_bc_txen_expand(
 .  receive_permission (receive_permission ),
 
 .  trt          (trt_bcmode        ),
-.  trr          (trr_bcmode        )
+.  trr          (trr_bcmode        ),
+.  cnt_prf          (cnt_prf        )
 );
 
 //上电只复位一次，用sys_rst
@@ -592,6 +595,31 @@ assign trr_o_h    = trr[3:0] ;
 assign rst_o_h    = chip_reset    ;
 
 `ifdef DEBUG
+//---------------------TRT-----------------------//
+wire BC1_G1_TRT,BC1_G2_TRT,BC1_G3_TRT,BC1_G4_TRT;
+wire BC1_G1_TRR,BC1_G2_TRR,BC1_G3_TRR,BC1_G4_TRR;
+wire BC2_G1_TRT,BC2_G2_TRT,BC2_G3_TRT,BC2_G4_TRT;
+wire BC2_G1_TRR,BC2_G2_TRR,BC2_G3_TRR,BC2_G4_TRR;
+
+reg [2:0] prf_dff;
+wire prf_pos;
+
+assign BC1_G1_TRT = BC1_TRT[0];
+assign BC1_G2_TRT = BC1_TRT[1];
+assign BC1_G3_TRT = BC1_TRT[2];
+assign BC1_G4_TRT = BC1_TRT[3];
+assign BC1_G1_TRR = BC1_TRR[0];
+assign BC1_G2_TRR = BC1_TRR[1];
+assign BC1_G3_TRR = BC1_TRR[2];
+assign BC1_G4_TRR = BC1_TRR[3];
+assign BC2_G1_TRT = BC2_TRT[0];
+assign BC2_G2_TRT = BC2_TRT[1];
+assign BC2_G3_TRT = BC2_TRT[2];
+assign BC2_G4_TRT = BC2_TRT[3];
+assign BC2_G1_TRR = BC2_TRR[0];
+assign BC2_G2_TRR = BC2_TRR[1];
+assign BC2_G3_TRR = BC2_TRR[2];
+assign BC2_G4_TRR = BC2_TRR[3];
 
 //7000和rfsoc不同
 //z7000
@@ -599,27 +627,28 @@ assign rst_o_h    = chip_reset    ;
         .clk(sys_clk), // input wire clk
 
 
-        .probe0     (BC1_TRT[0] ), // 1
-        .probe1     (BC1_TRR[0] ), // 1
-        .probe2     (BC1_TRT[1] ), // 1
-        .probe3     (BC1_TRR[1] ), // 1
-        .probe4     (BC1_TRT[2] ), // 1
-        .probe5     (BC1_TRR[2] ), // 1
-        .probe6     (BC1_TRT[3] ), // 1
-        .probe7     (BC1_TRR[3] ), // 1
-        .probe8     (BC2_TRT[0] ), // 1
-        .probe9     (BC2_TRR[0] ), // 1
-        .probe10    (BC2_TRT[1] ), // 1
-        .probe11    (BC2_TRR[1] ), // 1
-        .probe12    (BC2_TRT[2] ), // 1
-        .probe13    (BC2_TRR[2] ), // 1
-        .probe14    (BC2_TRT[3] ), // 1
-        .probe15    (BC2_TRR[3] ), // 1
+        .probe0     (BC1_G1_TRR), // 1
+        .probe1     (BC1_G2_TRR), // 1
+        .probe2     (BC1_G3_TRR), // 1
+        .probe3     (BC1_G4_TRR), // 1
+        .probe4     (BC1_G1_TRT), // 1
+        .probe5     (BC1_G2_TRT), // 1
+        .probe6     (BC1_G3_TRT), // 1
+        .probe7     (BC1_G4_TRT), // 1
+        .probe8     (BC2_G1_TRR), // 1
+        .probe9     (BC2_G2_TRR), // 1
+        .probe10    (BC2_G3_TRR), // 1
+        .probe11    (BC2_G4_TRR), // 1
+        .probe12    (BC2_G1_TRT), // 1
+        .probe13    (BC2_G2_TRT), // 1
+        .probe14    (BC2_G3_TRT), // 1
+        .probe15    (BC2_G4_TRT), // 1
         .probe16    (prf        ), // 1
         .probe17    (tr_en_merge), // 1
         .probe18    (bc_mode    ), // 3
         .probe19    (image_start), // 1
-        .probe20    (sys_rst    )  // 1
+        .probe20    (sys_rst    ),  // 1
+        .probe21    (cnt_prf    )  // 1
     );
 //rfsoc
     // ila_trt u_ila_trt (

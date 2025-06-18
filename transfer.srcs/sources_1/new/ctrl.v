@@ -241,7 +241,7 @@ cpu_sys_wrapper u_cpu_sys_wrapper(
 
 
 
- bc_wrapper_z7#(
+ bc_wrapper#(
     `ifndef G3
     . LANE_BIT                      (LANE_BIT             )         ,
     . FRAME_DATA_BIT                (FRAME_DATA_BIT       )         ,
@@ -260,7 +260,7 @@ cpu_sys_wrapper u_cpu_sys_wrapper(
     . CMD_BIT                       (CMD_BIT              )         ,
     . BEAM_NUM                      (BEAM_NUM             )
                                                           )
-u_bc_wrapper_z7                     (
+u_bc_wrapper                     (
     . sys_clk 	                    (sys_clk 	          )         ,
     . sys_rst 	                    (sys_rst 	          )         ,//上电只复位一次，用sys_rst
     . prf_pin_in                    (prf_pin_in           )         ,

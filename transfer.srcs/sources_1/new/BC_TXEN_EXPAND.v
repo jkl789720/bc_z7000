@@ -11,10 +11,11 @@ input  [1:0]       send_permission ,
 input  [1:0]       receive_permission ,
 input  [15:0]       receive_period ,
 output [7:0]        trt         ,
-output [7:0]        trr         
+output [7:0]        trr         ,
+output              cnt_prf     //仅调试用，方便看ila
 
 );
-wire cnt_prf;
+// wire cnt_prf;
 //7000和rfsoc不同
 wire trt_o_p_0;
 wire trr_o_p_0;
