@@ -19,7 +19,7 @@ input  sys_clk       		,
 input  reset       		    ,
 input  prf          		,
 input  ld_o					,
-input  send_flag_in			,
+// input  send_flag_in			,
 input  single_lane			,
 input  tr_mode				,
 input  tr_en				,
@@ -74,21 +74,9 @@ always@(posedge sys_clk)begin
 	else
 		cnt_tr <= cnt_tr + 1;
 end
-assign tr_other = (cnt_tr >= cnt_tr_num0) && (cnt_tr < cnt_tr_num - 1) && send_flag_in;
+assign tr_other = (cnt_tr >= cnt_tr_num0) && (cnt_tr < cnt_tr_num - 1) ;
 // assign tr_other = (cnt_tr >= 200) && (cnt_tr < 700 - 1) && send_flag_in;
-//----------tr_single----------//
-wire tr_single;
-reg single_flag_sync;
-always@(posedge sys_clk)begin
-    if(reset)
-        single_flag_sync <= 0;
-    else if(ld_o && single_lane)
-        single_flag_sync <= 1;
-    else if(ld_o && single_lane == 0)
-        single_flag_sync <= 0;
-end
 
-assign tr_single   = send_flag_in && single_flag_sync;
 
 reg data_valid;
 always@(posedge sys_clk)begin
@@ -101,7 +89,7 @@ end
 // wire tr_en_merge;
 //单波位的单通道以及多波位都是脉冲 单波位单通道是长拉高
 wire tr_o_local;
-assign tr_o_local = data_valid && (single_lane ? tr_single : tr_other);
+assign tr_o_local = data_valid &&  tr_other;
 // assign tr_en_merge = 1;
 
 reg [2:0] tr_en_r;

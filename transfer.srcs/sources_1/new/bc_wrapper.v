@@ -93,18 +93,18 @@ module bc_wrapper#(
 
 //BC_RST
     output                          BC_RST       ,
-// output                            sel_o_h        ,
-// output                            scl_o_h    	 , 
-// output [GROUP_CHIP_NUM-1:0]       sd_o_h         ,
-// output                            ld_o_h         ,
-// output                            dary_o_h       ,
-// output [3:0]                      trt_o_h        ,
-// output [3:0]                      trr_o_h        ,
-// output                            rst_o_h        ,
+output                            sel_o_h        ,
+output                            scl_o_h    	 , 
+output [GROUP_CHIP_NUM-1:0]       sd_o_h         ,
+output                            ld_o_h         ,
+output                            dary_o_h       ,
+output [3:0]                      trt_o_h        ,
+output [3:0]                      trr_o_h        ,
+output                            rst_o_h        ,
 output                              init_done            
 
 );
-// assign init_done = 1;//禁用初始化
+assign init_done = 1;//注debug：禁用初始化
 
 wire reset;
 //-------------------wire declare----------------------//
@@ -244,32 +244,32 @@ wire [3:0]                      trr_o_h        ;
 wire                            rst_o_h        ;
 //7000和rfsoc不同
 //------------mimo / junke / ku total polarization--------------------//
-// //tr_en_sel_ram
-// wire                          bram_tx_sel_clk ;
-// wire                          bram_tx_sel_en  ;
-// wire [3:0]                    bram_tx_sel_we  ;
-// wire [31:0]                   bram_tx_sel_addr;
-// wire [31:0]                   bram_tx_sel_din ;
-// wire [31:0]                   bram_tx_sel_dout;
-// wire                          bram_tx_sel_rst ;
-// //BC1_new
-// wire  [3:0]                   BC1_SEL      ;  
-// wire  [3:0]                   BC1_CLK      ;        
-// wire  [15:0]                  BC1_DATA     ;   
-// wire  [3:0]                   BC1_LD       ; 
-// wire  [3:0]                   BC1_TRT      ; 
-// wire  [3:0]                   BC1_TRR      ;   
+//tr_en_sel_ram
+wire                          bram_tx_sel_clk ;
+wire                          bram_tx_sel_en  ;
+wire [3:0]                    bram_tx_sel_we  ;
+wire [31:0]                   bram_tx_sel_addr;
+wire [31:0]                   bram_tx_sel_din ;
+wire [31:0]                   bram_tx_sel_dout;
+wire                          bram_tx_sel_rst ;
+//BC1_new
+wire  [3:0]                   BC1_SEL      ;  
+wire  [3:0]                   BC1_CLK      ;        
+wire  [15:0]                  BC1_DATA     ;   
+wire  [3:0]                   BC1_LD       ; 
+wire  [3:0]                   BC1_TRT      ; 
+wire  [3:0]                   BC1_TRR      ;   
  
-// //BC2_new
-// wire  [3:0]                   BC2_SEL      ;   
-// wire  [3:0]                   BC2_CLK      ;         
-// wire  [15:0]                  BC2_DATA     ;    
-// wire  [3:0]                   BC2_LD       ;  
-// wire  [3:0]                   BC2_TRT      ;
-// wire  [3:0]                   BC2_TRR      ;   
+//BC2_new
+wire  [3:0]                   BC2_SEL      ;   
+wire  [3:0]                   BC2_CLK      ;         
+wire  [15:0]                  BC2_DATA     ;    
+wire  [3:0]                   BC2_LD       ;  
+wire  [3:0]                   BC2_TRT      ;
+wire  [3:0]                   BC2_TRR      ;   
 
-// //BC_RST
-// wire                          BC_RST       ; 
+//BC_RST
+wire                          BC_RST       ; 
 
 reg [7:0] sd_back_r [1:0];
 
@@ -466,7 +466,6 @@ u_wave_ctrl_sig_gen(
 . reset       		    (reset              ),
 . prf    		        (prf    		    ),
 . ld_o	                (ld_o	            ),
-. send_flag_in			(send_flag_in	    ),
 . single_lane			(single_lane		),
 . tr_mode				(tr_mode			),
 . tr_en				    (tr_en				),
@@ -542,8 +541,8 @@ u_init_fsm(
     . cs_n          (cs_n_init          ) ,
     . sclk          (sclk_init          ) ,
     . miso          (sd_back_r[1]       ) ,
-    . mosi          (mosi_init          ) ,
-    . init_done     (init_done          )
+    . mosi          (mosi_init          ) 
+    // . init_done     (init_done          )//注debug：禁用初始化
 );
 
 //单通道处理

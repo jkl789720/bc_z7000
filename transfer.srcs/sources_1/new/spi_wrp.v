@@ -115,7 +115,7 @@ end
 wire test_flag;
 wire [2:0] sample_offset;
 // assign test_flag = cnt_cycle == 1  && (cnt_bit >= 6 && cnt_bit <= DATA_WIDTH + 5);//注sim:仿真使用
-assign test_flag = cnt_cycle == sample_offset_cycle && (cnt_bit >= sample_offset && cnt_bit <= sample_offset + 24 - 1);//注design:根据ila的时序图调整得到，在此刻能采集到正确回码数据 注debug
+assign test_flag = cnt_cycle == 3 && (cnt_bit >= 5 && cnt_bit <= 5 + 24 - 1);//注design:根据ila的时序图调整得到，在此刻能采集到正确回码数据 注debug
 always @(posedge sys_clk) begin
     if(sys_rst)begin
         mosi <= 0;
@@ -137,22 +137,5 @@ always @(posedge sys_clk) begin
         recv_data <= {recv_data[22:0], miso};
     end
 end
-`ifdef DEBUG
-    ila_spi_init u_ila_spi_init(
-        .clk(sys_clk),
-        .probe0(cs_n),
-        .probe1(sclk),
-        .probe2(miso),
-        .probe3(recv_data),
-        .probe4(test_flag),
-        .probe5(wr_done),
-        .probe6(cnt_bit),
-        .probe7(cnt_cycle)
-    );
-vio_debug u_vio_debug(
-        .clk(sys_clk),
-        .probe_out0(sample_offset),
-        .probe_out1(sample_offset_cycle)
-    );
-`endif
+
 endmodule
