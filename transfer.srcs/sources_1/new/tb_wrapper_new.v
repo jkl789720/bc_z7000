@@ -134,7 +134,7 @@ always @(posedge sys_clk) begin
     end
 end
 
-assign bram_tx_sel_din = {8'd0,8'b1111_0000,8'd0,8'b0000_1111};
+assign bram_tx_sel_din = 32'h00003cc3;
 
 
 
@@ -387,7 +387,7 @@ end
 
 
 
-bc_wrapper_z7#(
+bc_wrapper#(
     `ifndef G3
     . LANE_BIT         (LANE_BIT        ),
     . FRAME_DATA_BIT   (FRAME_DATA_BIT  ),
@@ -406,7 +406,7 @@ bc_wrapper_z7#(
     . CMD_BIT          (CMD_BIT         ),
     . BEAM_NUM         (BEAM_NUM        )
 )
-u_bc_wrapper_z7(
+u_bc_wrapper(
     . sys_clk 	        (sys_clk 	        )       ,
     . sys_rst 	        (sys_rst 	        )       ,
     . prf_pin_in        (prf_pin_in         )       ,
@@ -464,67 +464,67 @@ u_bc_wrapper_z7(
     . BC_RST            (BC_RST             )       , 
     . init_done         (init_done          )        
 );
-//-------------------------校验----------------------//
-//---------------------娉㈡帶鐮佹楠?------------------------//
-wire             clka_check ;
-wire             ena_check  ;
-wire [3:0]       wea_check  ;
-wire [31:0]      addra_check;
-wire [31:0]      dina_check ;
-wire [31:0]      douta_check;
+// //-------------------------校验----------------------//
+// //---------------------娉㈡帶鐮佹楠?------------------------//
+// wire             clka_check ;
+// wire             ena_check  ;
+// wire [3:0]       wea_check  ;
+// wire [31:0]      addra_check;
+// wire [31:0]      dina_check ;
+// wire [31:0]      douta_check;
 
-wire [31:0]      spi_clk;
-wire [31:0]      spi_cs_n;
-wire [31:0]      spi_mosi;
+// wire [31:0]      spi_clk;
+// wire [31:0]      spi_cs_n;
+// wire [31:0]      spi_mosi;
 
-assign beam_pos_num = BEAM_POS_NUM;
-assign spi_clk = signal_expansion(BC2_CLK,BC1_CLK);
-assign spi_cs_n = signal_expansion(BC2_SEL,BC1_SEL);
-assign spi_mosi = {BC2_DATA,BC1_DATA};
-check_wrapper #(
-    .CHANNEL_NUM  (32 ),
-    .BIT_NUM      (106)
-)
- u_check_wrapper (
-    .clk                     ( sys_clk            ),
-    .rst_n                   ( ~(sys_rst | soft_rst)           ),
-    .spi_clk                 ( spi_clk            ),
-    .spi_cs_n                ( spi_cs_n           ),
-    .spi_mosi                ( spi_mosi           ),
-    .beam_pos_num            ( beam_pos_num       ),
-    .clka                    ( clka_check         ),
-    .ena                     ( ena_check          ),
-    .wea                     ( wea_check[0]       ),
-    .addra                   ( addra_check[31:2]  ),
-    .dina                    ( dina_check         ),
-    .douta                   ( douta_check        )
-);
+// assign beam_pos_num = BEAM_POS_NUM;
+// assign spi_clk = signal_expansion(BC2_CLK,BC1_CLK);
+// assign spi_cs_n = signal_expansion(BC2_SEL,BC1_SEL);
+// assign spi_mosi = {BC2_DATA,BC1_DATA};
+// check_wrapper #(
+//     .CHANNEL_NUM  (32 ),
+//     .BIT_NUM      (106)
+// )
+//  u_check_wrapper (
+//     .clk                     ( sys_clk            ),
+//     .rst_n                   ( ~(sys_rst | soft_rst)           ),
+//     .spi_clk                 ( spi_clk            ),
+//     .spi_cs_n                ( spi_cs_n           ),
+//     .spi_mosi                ( spi_mosi           ),
+//     .beam_pos_num            ( beam_pos_num       ),
+//     .clka                    ( clka_check         ),
+//     .ena                     ( ena_check          ),
+//     .wea                     ( wea_check[0]       ),
+//     .addra                   ( addra_check[31:2]  ),
+//     .dina                    ( dina_check         ),
+//     .douta                   ( douta_check        )
+// );
 
-ila_check_back_ram_r u_u_ila_check_back_ram_r (
-	.clk(clka_check), // input wire clk
-
-
-	.probe0(ena_check), // input wire [0:0]  probe0  
-	.probe1(wea_check), // input wire [0:0]  probe1 
-	.probe2(addra_check), // input wire [3:0]  probe2 
-	.probe3(dina_check), // input wire [31:0]  probe3 
-	.probe4(douta_check) // input wire [31:0]  probe4 
-);
+// ila_check_back_ram_r u_u_ila_check_back_ram_r (
+// 	.clk(clka_check), // input wire clk
 
 
+// 	.probe0(ena_check), // input wire [0:0]  probe0  
+// 	.probe1(wea_check), // input wire [0:0]  probe1 
+// 	.probe2(addra_check), // input wire [3:0]  probe2 
+// 	.probe3(dina_check), // input wire [31:0]  probe3 
+// 	.probe4(douta_check) // input wire [31:0]  probe4 
+// );
 
 
 
-function [31:0] signal_expansion;
-    input [3:0] sig1;//绗竴涓疄鍙?
-    input [3:0] sig0;//绗簩涓疄鍙?
-    begin
-        signal_expansion = {
-                        {4{sig1[3]}},{4{sig1[2]}},{4{sig1[1]}},{4{sig1[0]}},
-                        {4{sig0[3]}},{4{sig0[2]}},{4{sig0[1]}},{4{sig0[0]}}
-        };
-    end
-endfunction
+
+
+// function [31:0] signal_expansion;
+//     input [3:0] sig1;//绗竴涓疄鍙?
+//     input [3:0] sig0;//绗簩涓疄鍙?
+//     begin
+//         signal_expansion = {
+//                         {4{sig1[3]}},{4{sig1[2]}},{4{sig1[1]}},{4{sig1[0]}},
+//                         {4{sig0[3]}},{4{sig0[2]}},{4{sig0[1]}},{4{sig0[0]}}
+//         };
+//     end
+// endfunction
 
 
 endmodule

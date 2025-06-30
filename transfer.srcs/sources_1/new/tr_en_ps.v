@@ -6,6 +6,7 @@ module tr_en_ps#(
 input           sys_clk         ,
 input           sys_rst         ,
 input           tr_en           ,
+input           prf             ,
 input [31:0]    beam_pos_num    ,
 input [23:0]    beam_pos_cnt    ,// prf --> tr_en 的时间必须大于5us
 input [15:0]    receive_period  ,
@@ -23,32 +24,48 @@ output [7:0]    trr_ps
     );
 
 
+reg [DWIDTH:0] CFGBC_OUTEN_r = 0;
 
-
-wire [7:0] tx_sel;//选择对应bit作为发射通道，为1作为发射，发射使能来了就发射，否则作为接收
+wire [15:0] tx_sel;//选择对应bit作为发射通道，为1作为发射，发射使能来了就发射，否则作为接收
 wire trt_o;
 wire trr_o;
 
 wire                bram_tx_sel_en_read   ;   
 wire [31 : 0]        bram_tx_sel_addr_read ;  
-wire [15 : 0]       bram_tx_sel_dout_read ;  
+wire [31 : 0]       bram_tx_sel_dout_read ;  
 
-assign tx_sel = bram_tx_sel_dout_read[7:0];
+reg prf_r;
+wire prf_pos;
+reg [23:0] cnt_prf;//对prf进行计数，计数到beam_pos_cnt时，cnt_prf复位
+always@(posedge sys_clk) prf_r <= prf;
+assign prf_pos = prf && !prf_r;
+always@(posedge sys_clk)begin
+    if(sys_rst)
+        cnt_prf <= 0;
+    else if(prf_pos)begin
+        if(cnt_prf == beam_pos_num)
+            cnt_prf <= 1;
+        else
+            cnt_prf <= cnt_prf + 1;
+    end
+end
+
+assign tx_sel = bram_tx_sel_dout_read[15:0];
 
 
 //ram_read_port
 
-
+//高位发射 低位接收
 genvar kk;
 generate
     for(kk = 0;kk < 8;kk = kk + 1)begin:blk0
-        assign trt_ps[kk] =  tx_sel[kk] ? trt_o : 0;
-        assign trr_ps[kk] =  tx_sel[kk] ? trr_o : 0;
+        assign trt_ps[kk] =  tx_sel[kk] ? trt_o : 1;//接收
+        assign trr_ps[kk] =  tx_sel[kk+8] ? trr_o : 0;//发射
     end
 endgenerate
 
 assign bram_tx_sel_en_read = 1;
-assign bram_tx_sel_addr_read = beam_pos_num == 1 ? 0 : beam_pos_cnt -1;
+assign bram_tx_sel_addr_read = beam_pos_num == 1 ? 0 : cnt_prf -1;
 
 
 
@@ -79,6 +96,20 @@ single2double#(
 .  receive_period (receive_period) ,
 .  trt_o          (trt_o         ) ,
 .  trr_o          (trr_o         ) 
+);
+
+ila_trt_ps u_ila_trt_ps (
+	.clk(sys_clk                 ), 
+	.probe0(tr_en                ), //1
+	.probe1(prf                  ), //1
+	.probe2(cnt_prf              ), //24
+	.probe3(bram_tx_sel_addr_read), //32
+	.probe4(bram_tx_sel_dout_read), //32
+	.probe5(trt_ps               ), //8
+	.probe6(trr_ps               ), //8
+	.probe7(trt_o                ), //1
+	.probe8(trr_o                ), //1
+	.probe9(tx_sel               )  //15
 );
 
 endmodule

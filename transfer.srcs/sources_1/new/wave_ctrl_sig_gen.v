@@ -19,7 +19,6 @@ input  sys_clk       		,
 input  reset       		    ,
 input  prf          		,
 input  ld_o					,
-// input  send_flag_in			,
 input  single_lane			,
 input  tr_mode				,
 input  tr_en				,
@@ -42,12 +41,12 @@ assign prf_pos = ~prf_r[2] && prf_r[1];
 //-----------------------------生成tr信号-----------------------
 //----tr_other
 wire tr_other;
-wire [63:0] period0,cnt_tr_num0;
+wire [63:0] period0,cnt_tr_num0;//延迟时间
 assign period0 = 900; 
 // assign cnt_tr_num0 = (period0 * SYSHZ) / 1000_000;
 
 
-wire [63:0] period1,cnt_tr_num1;
+wire [63:0] period1,cnt_tr_num1;//使能时间
 assign period1 = 100;
 // assign cnt_tr_num1 = (period1 * SYSHZ) / 1000_000;
 assign cnt_tr_num0 = 900; // 150_000 3ms
@@ -74,10 +73,9 @@ always@(posedge sys_clk)begin
 	else
 		cnt_tr <= cnt_tr + 1;
 end
-assign tr_other = (cnt_tr >= cnt_tr_num0) && (cnt_tr < cnt_tr_num - 1) ;
-// assign tr_other = (cnt_tr >= 200) && (cnt_tr < 700 - 1) && send_flag_in;
+assign tr_other = (cnt_tr >= cnt_tr_num0) && (cnt_tr < cnt_tr_num - 1);
 
-
+//配置过tr芯片才能有使能信号
 reg data_valid;
 always@(posedge sys_clk)begin
     if(reset)
@@ -86,12 +84,11 @@ always@(posedge sys_clk)begin
         data_valid <= 1;
 end
 
-// wire tr_en_merge;
-//单波位的单通道以及多波位都是脉冲 单波位单通道是长拉高
 wire tr_o_local;
-assign tr_o_local = data_valid &&  tr_other;
-// assign tr_en_merge = 1;
+assign tr_o_local = data_valid && tr_other;
 
+
+//从外部输入的信号需要限位
 reg [2:0] tr_en_r;
 wire tr_en_pos;
 always@(posedge sys_clk)begin
@@ -106,7 +103,7 @@ reg [31:0] cnt_close;
 always@(posedge sys_clk)begin
     if(reset)
         cnt_close <= 5000;
-    else if(tr_en_pos && (!single_lane))
+    else if(tr_en_pos)
         cnt_close <= 0;
     else if(cnt_close == 5000)
         cnt_close <= cnt_close;
@@ -116,7 +113,7 @@ end
 
 wire tr_input;
 wire tr_max;
-assign tr_max = (single_lane) ? 1 : (cnt_close <= 5000 - 1);
+assign tr_max = (cnt_close <= 5000 - 1);
 assign tr_o_input = tr_max && tr_en_r[1];
 
 assign tr_en_merge = tr_mode ? tr_o_input: tr_o_local;

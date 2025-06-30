@@ -1,5 +1,6 @@
 `include "configure.vh"
 //功能：tr信号一分多，又或者说是tr模式控制
+//尤其注意，边坡是降速率的
 `timescale 1ns / 1ps
 module bc_wrapper#(
     `ifndef G3
@@ -93,14 +94,14 @@ module bc_wrapper#(
 
 //BC_RST
     output                          BC_RST       ,
-output                            sel_o_h        ,
-output                            scl_o_h    	 , 
-output [GROUP_CHIP_NUM-1:0]       sd_o_h         ,
-output                            ld_o_h         ,
-output                            dary_o_h       ,
-output [3:0]                      trt_o_h        ,
-output [3:0]                      trr_o_h        ,
-output                            rst_o_h        ,
+// output                            sel_o_h        ,
+// output                            scl_o_h    	 , 
+// output [GROUP_CHIP_NUM-1:0]       sd_o_h         ,
+// output                            ld_o_h         ,
+// output                            dary_o_h       ,
+// output [3:0]                      trt_o_h        ,
+// output [3:0]                      trr_o_h        ,
+// output                            rst_o_h        ,
 output                              init_done            
 
 );
@@ -242,34 +243,34 @@ wire                            dary_o_h       ;
 wire [3:0]                      trt_o_h        ;
 wire [3:0]                      trr_o_h        ;
 wire                            rst_o_h        ;
-//7000和rfsoc不同
-//------------mimo / junke / ku total polarization--------------------//
-//tr_en_sel_ram
-wire                          bram_tx_sel_clk ;
-wire                          bram_tx_sel_en  ;
-wire [3:0]                    bram_tx_sel_we  ;
-wire [31:0]                   bram_tx_sel_addr;
-wire [31:0]                   bram_tx_sel_din ;
-wire [31:0]                   bram_tx_sel_dout;
-wire                          bram_tx_sel_rst ;
-//BC1_new
-wire  [3:0]                   BC1_SEL      ;  
-wire  [3:0]                   BC1_CLK      ;        
-wire  [15:0]                  BC1_DATA     ;   
-wire  [3:0]                   BC1_LD       ; 
-wire  [3:0]                   BC1_TRT      ; 
-wire  [3:0]                   BC1_TRR      ;   
+// //7000和rfsoc不同
+// //------------mimo / junke / ku total polarization--------------------//
+// //tr_en_sel_ram
+// wire                          bram_tx_sel_clk ;
+// wire                          bram_tx_sel_en  ;
+// wire [3:0]                    bram_tx_sel_we  ;
+// wire [31:0]                   bram_tx_sel_addr;
+// wire [31:0]                   bram_tx_sel_din ;
+// wire [31:0]                   bram_tx_sel_dout;
+// wire                          bram_tx_sel_rst ;
+// //BC1_new
+// wire  [3:0]                   BC1_SEL      ;  
+// wire  [3:0]                   BC1_CLK      ;        
+// wire  [15:0]                  BC1_DATA     ;   
+// wire  [3:0]                   BC1_LD       ; 
+// wire  [3:0]                   BC1_TRT      ; 
+// wire  [3:0]                   BC1_TRR      ;   
  
-//BC2_new
-wire  [3:0]                   BC2_SEL      ;   
-wire  [3:0]                   BC2_CLK      ;         
-wire  [15:0]                  BC2_DATA     ;    
-wire  [3:0]                   BC2_LD       ;  
-wire  [3:0]                   BC2_TRT      ;
-wire  [3:0]                   BC2_TRR      ;   
+// //BC2_new
+// wire  [3:0]                   BC2_SEL      ;   
+// wire  [3:0]                   BC2_CLK      ;         
+// wire  [15:0]                  BC2_DATA     ;    
+// wire  [3:0]                   BC2_LD       ;  
+// wire  [3:0]                   BC2_TRT      ;
+// wire  [3:0]                   BC2_TRR      ;   
 
-//BC_RST
-wire                          BC_RST       ; 
+// //BC_RST
+// wire                          BC_RST       ; 
 
 reg [7:0] sd_back_r [1:0];
 
@@ -477,6 +478,7 @@ tr_en_ps u_tr_en_ps(
 . sys_clk            (sys_clk         ) ,
 . sys_rst            (reset           ) ,
 . tr_en              (tr_en_merge     ) ,
+. prf                (prf             ) ,
 . beam_pos_num       (beam_pos_num    ) ,
 . beam_pos_cnt       (beam_pos_cnt    ) ,
 . receive_period     (receive_period  ) ,
@@ -546,8 +548,18 @@ u_init_fsm(
 );
 
 //单通道处理
-assign trt = single_lane ? send_flag_in : trt_bcmode;//注design：边坡为 trt_ps；(junke)(ku_polarization)(小sar) 为 trt_bcmode
-assign trr = single_lane ? send_flag_in : trr_bcmode;//注design：边坡为 trt_ps；(junke)(ku_polarization)(小sar) 为 trt_bcmode
+reg single_lane_valid;
+always@(posedge sys_clk)begin
+    if(sys_rst)
+        single_lane_valid <= 0;
+    else if(ld_o && single_lane)
+        single_lane_valid <= 1;
+    else if(ld_o && single_lane == 0)
+        single_lane_valid <= 0;
+end
+
+assign trt =  single_lane ? send_flag_in : trt_ps;//注design：边坡为 trt_ps；(junke)(ku_polarization)(小sar) 为 trt_bcmode
+assign trr =  single_lane ? send_flag_in : trr_ps;//注design：边坡为 trr_ps；(junke)(ku_polarization)(小sar) 为 trr_bcmode
 
 //------------mimo or junke--------------------//
 assign BC1_SEL  =  init_done ? {4{sel_o}} :  cs_n_init[3:0];

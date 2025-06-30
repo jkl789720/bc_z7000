@@ -22,7 +22,7 @@ module ctrl#(
     
     parameter GROUP_CHIP_NUM   = 32                              ,
     parameter GROUP_NUM        = 1                               ,
-    parameter SCLHZ            = 10_000_000                      ,
+    parameter SCLHZ            = 1_000_000                      ,
 
 
 
