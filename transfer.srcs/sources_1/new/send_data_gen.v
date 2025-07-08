@@ -64,7 +64,8 @@ output reg                  dary_o                      ,
 
 output reg                  temper_en                   ,
 
-output reg [23:0]           beam_pos_cnt                       
+output reg [23:0]           beam_pos_cnt            , //指示当前波位，4个波位的话0-3变化             
+output reg [23:0]           beam_pos_cnt_temp            //从第一个有效prf开始，4个波位的话1-4循环                             
 );
 
 
@@ -136,7 +137,7 @@ reg  [$clog2(GROUP_CHIP_NUM*GROUP_NUM)-1:0]     rd_cnt_r0         ;
 wire [127:0]                          rd_data           ;
 
 // reg  [23:0]                     beam_pos_cnt_temp ;
-// reg [23:0]                            beam_pos_cnt      ;
+// reg [23:0]                            beam_pos_cnt  ;
 
 wire [31:0]                           rd_addr           ;
 
@@ -292,7 +293,7 @@ localparam OFFSET_SHIFT = $clog2(READ_PORT_BYTES);
 localparam BASE_SHIFT   = $clog2(BEAM_BYTES);
 
 assign offset_addr  = rd_cnt << OFFSET_SHIFT      ;
-assign base_addr    = beam_pos_cnt << BASE_SHIFT  ;
+assign base_addr    = (beam_pos_cnt) << BASE_SHIFT  ;
 assign rd_addr      = base_addr + offset_addr     ;
 
 
@@ -311,7 +312,7 @@ wire [31:0] rd_delay_addr;
 wire [31:0] rd_delay_data;
 
 assign  rd_delay_en = (c_state == CMD_GEN);
-assign  rd_delay_addr = beam_pos_cnt << 2;
+assign  rd_delay_addr = (beam_pos_cnt) << 2;
 
 assign cmd_value = {rd_delay_data,delay_en,group_id};
 
@@ -330,7 +331,7 @@ always@(*)begin
         case (c_state)
             `ifdef SAR
                 IDLE:begin
-                    if(valid_pos)//由于时序对齐的原因用打一拍后的信号
+                    if(v(alid_pos)//由 - 1)于时序对齐的原因用打一拍后的信号
                         n_state = ARBITRATE0;
                     else
                         n_state = c_state;
@@ -468,6 +469,7 @@ always@(posedge sys_clk)begin
         mode               <= 0;
         flag               <= 0;
         beam_pos_cnt       <= 0;
+        beam_pos_cnt_temp       <= 0;
         ld_done            <= 0;
         cnt_ld             <= 0;
         ld_o               <= 0;
@@ -486,6 +488,7 @@ always@(posedge sys_clk)begin
                 mode              <= 0;
                 flag              <= 0;
                 beam_pos_cnt      <= 0;
+                beam_pos_cnt_temp <= 0;
                 ld_done           <= 0;
                 cnt_ld            <= 0;
                 ld_o              <= 0;
@@ -583,7 +586,11 @@ always@(posedge sys_clk)begin
                     beam_pos_cnt <= 0;
                 else
                     beam_pos_cnt <= beam_pos_cnt + 1;
-                
+                if(beam_pos_cnt_temp >= beam_pos_num)
+                    beam_pos_cnt_temp <= 1;
+                else
+                    beam_pos_cnt_temp <= beam_pos_cnt_temp + 1;
+
             end
             WAIT_SOM_PRF:begin
                 if(prf_pos)begin

@@ -206,6 +206,7 @@ wire [7:0] trt;
 wire [7:0] trr;
 
 wire [23:0] beam_pos_cnt;
+wire [23:0] beam_pos_cnt_temp;
 
 wire tr_en_merge;
 
@@ -405,7 +406,8 @@ u_send_data_gen(
 .  dary_o  	            (dary_o                 ) ,
 
 .  temper_req           (temper_req             ) ,
-.  beam_pos_cnt         (beam_pos_cnt           ) 
+.  beam_pos_cnt         (beam_pos_cnt           ) , 
+.  beam_pos_cnt_temp    (beam_pos_cnt_temp      )
 );
 
 
@@ -480,7 +482,7 @@ tr_en_ps u_tr_en_ps(
 . tr_en              (tr_en_merge     ) ,
 . prf                (prf             ) ,
 . beam_pos_num       (beam_pos_num    ) ,
-. beam_pos_cnt       (beam_pos_cnt    ) ,
+. beam_pos_cnt_temp       (beam_pos_cnt_temp    ) ,
 . receive_period     (receive_period  ) ,
 . bram_tx_sel_clk    (bram_tx_sel_clk ) ,
 . bram_tx_sel_en     (bram_tx_sel_en  ) ,

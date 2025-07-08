@@ -11,7 +11,7 @@ module tb_wrapper_new#(
 
     parameter GROUP_CHIP_NUM   = 32                              ,
     parameter GROUP_NUM        = 1                               ,
-    parameter SCLHZ            = 10_000_000                      ,
+    parameter SCLHZ            = 1_000_000                      ,
 
 
 
@@ -26,7 +26,7 @@ module tb_wrapper_new#(
 ();
 
 localparam LANE_NUM = 64*2;
-localparam BEAM_POS_NUM =  4;
+localparam BEAM_POS_NUM =  10;
 localparam WRITE_TIMES = 1;
 localparam TOTAL_LANE_NUM = LANE_NUM * BEAM_POS_NUM;
 localparam INIT_REG_NUM = 128;//多写一个方便回读

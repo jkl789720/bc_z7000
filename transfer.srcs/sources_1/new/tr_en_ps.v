@@ -8,7 +8,7 @@ input           sys_rst         ,
 input           tr_en           ,
 input           prf             ,
 input [31:0]    beam_pos_num    ,
-input [23:0]    beam_pos_cnt    ,// prf --> tr_en 的时间必须大于5us
+input [23:0]    beam_pos_cnt_temp    ,// prf --> tr_en 的时间必须大于5us
 input [15:0]    receive_period  ,
 //权限
 input           bram_tx_sel_clk ,
@@ -43,7 +43,7 @@ always@(posedge sys_clk)begin
     if(sys_rst)
         cnt_prf <= 0;
     else if(prf_pos)begin
-        if(cnt_prf == beam_pos_num)
+        if(cnt_prf >= beam_pos_num)
             cnt_prf <= 1;
         else
             cnt_prf <= cnt_prf + 1;
@@ -65,7 +65,7 @@ generate
 endgenerate
 
 assign bram_tx_sel_en_read = 1;
-assign bram_tx_sel_addr_read = beam_pos_num == 1 ? 0 : cnt_prf -1;
+assign bram_tx_sel_addr_read = beam_pos_num == 1 ? 0 : beam_pos_cnt_temp -1;
 
 
 
@@ -102,14 +102,15 @@ ila_trt_ps u_ila_trt_ps (
 	.clk(sys_clk                 ), 
 	.probe0(tr_en                ), //1
 	.probe1(prf                  ), //1
-	.probe2(cnt_prf              ), //24
+	.probe2(beam_pos_cnt_temp -1      ), //24
 	.probe3(bram_tx_sel_addr_read), //32
 	.probe4(bram_tx_sel_dout_read), //32
 	.probe5(trt_ps               ), //8
 	.probe6(trr_ps               ), //8
 	.probe7(trt_o                ), //1
 	.probe8(trr_o                ), //1
-	.probe9(tx_sel               )  //15
+	.probe9(tx_sel               ), //16
+	.probe10(beam_pos_num        )  //
 );
 
 endmodule
