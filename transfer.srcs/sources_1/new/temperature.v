@@ -29,7 +29,7 @@ output reg                          cmd_flag                     ,
 output reg                          scl_o                        ,
 output reg [GROUP_CHIP_NUM-1:0]     sd_o                         ,
 output                              rst_o                        ,
-output reg                          spi_done                 ,
+output reg                          spi_done                     ,
 
 input                               temper_en                    ,
 output     [7:0]                    temper_data0                 ,
@@ -40,8 +40,6 @@ output reg                          temper_data_valid            ,
 output                              temper_read_done             ,
 
 input      [GROUP_CHIP_NUM-1:0]     sd_i                         ,
-input                               ld_o                         ,
-input                               dary_o                       ,
 output reg [31:0]                   cnt_bit
 );
 

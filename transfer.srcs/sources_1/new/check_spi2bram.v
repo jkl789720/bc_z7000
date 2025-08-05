@@ -1,193 +1,120 @@
-// ============================================================================
-// Module: check_spi2bram
-// 功能  : 多波位写入BRAM。
-//         - 一次写入称为“一波位”，包含 CHANNEL_NUM * 4 次写操作。
-//         - beam_pos_num 表示本次需要写入的总波位数，
-//           可以是1(单波位)或更大(多波位)。
-//         - 每写完一波位，就判断 wave_count 是否达到 beam_pos_num_reg：
-//           如果未到达，继续等待下一波位数据；如果到达或超过，则输出done，
-//           并回到初始状态等待下一次写入。
-// ============================================================================
-module check_spi2bram #(
-    parameter CHANNEL_NUM = 32,  // SPI通道数
-    parameter BEAM_POS_NUM = 10  // 默认的波位数上限（也可仅作参考）
+`timescale 1ns / 1ps
+module check_spi2bram#(
+    parameter GROUP_NUM = 8 //注意：个组是物理结构上的组数，跟顶层模块参数不同
 )(
-    input                                   clk,
-    input                                   rst_n,
-    // SPI数据及有效标志（打包为宽总线）
-    input  [CHANNEL_NUM*106-1:0]            spi_data,  
-    input  [CHANNEL_NUM-1:0]                spi_valid,
-    
-    // 输入的波位数（本轮要写多少波位）
-    input  [31:0]                           beam_pos_num,
-    
-    // BRAM写接口
-    output reg                              bram_we,    // BRAM写使能
-    output reg [31:0]                       bram_addr,  // 写地址
-    output reg [31:0]                       bram_data,  // 写数据(32bit, 低26有效)
-    output reg                              done        // 本轮所有波位写完标志
-);
+    input                           sys_clk     ,
+    input                           sys_rst     ,
+    input   [23 : 0]                beam_pos_cnt ,
+    input  [GROUP_NUM*4-1:0]        mosi        ,
+    input  [GROUP_NUM - 1:0]        scl         ,
+    input  [GROUP_NUM - 1:0]        cs_n        ,
+    output                          bram_clk    ,
+    output                          bram_we     ,
+    output      [31:0]              bram_addr   ,
+    output      [31:0]              bram_data   ,
+    output reg                      bram_wr_done
+    );
+localparam LANE_NUM = GROUP_NUM * 16;
+localparam CHIP_NUM = GROUP_NUM * 4;
+localparam  FRAM_BIT_NUM = 106; 
+wire [FRAM_BIT_NUM-1:0]         rd_data  [CHIP_NUM-1:0]   ;
+wire [CHIP_NUM-1:0]             rd_datav            ;
 
-    // 每个波位包含 CHANNEL_NUM*4 次写
-    localparam LANE_NUM = CHANNEL_NUM * 4;
+reg [26-1:0]  rd_data_keep  [LANE_NUM-1:0];
+reg  [CHIP_NUM-1:0]              rd_datav_keep  ;
+reg [$clog2(LANE_NUM)-1:0] cnt_lane;
+wire add_cnt_lane,end_cnt_lane;
+reg work_flag;
+integer i,j;
 
-    // 缓存：存储当前波位的 SPI 数据
-    reg [105:0] spi_data_buf [0:CHANNEL_NUM-1];
-
-    // 状态机定义
-    localparam STATE_IDLE  = 2'b00,  // 等待下一次波位写入开始
-               STATE_WRITE = 2'b01,  // 正在写当前波位
-               STATE_DONE  = 2'b10;  // 当前波位写完，判断是否还要继续
-
-    reg [1:0] state, next_state;
-
-    // 记录本轮要写的总波位数
-    reg [31:0] beam_pos_num_reg;
-    // 记录已写完的波位计数
-    reg [31:0] wave_count;
-
-    // 单个波位内部的写地址计数器：0 ~ (LANE_NUM - 1)
-    reg [$clog2(LANE_NUM)-1:0] write_counter;
-
-    // 分段数据(26bit)
-    reg [25:0] seg_data;
-
-    // 计算当前写操作对应的通道、段号
-    wire [$clog2(CHANNEL_NUM)-1:0] channel_index = write_counter[$clog2(LANE_NUM)-1:2]; 
-    wire [1:0]                     seg_index     = write_counter[1:0];   
-
-    // 提取 26bit 分段（忽略高2位）
-    always @(*) begin
-        case (seg_index)
-            2'b00: seg_data = spi_data_buf[channel_index][25:0];
-            2'b01: seg_data = spi_data_buf[channel_index][51:26];
-            2'b10: seg_data = spi_data_buf[channel_index][77:52];
-            2'b11: seg_data = spi_data_buf[channel_index][103:78];
-            default: seg_data = 26'd0;
-        endcase
+//数据有效信号寄存
+always @(posedge sys_clk) begin
+    if(sys_rst)begin
+        rd_datav_keep <= 0;
     end
-
-    // ----------------------------------------------------------------------------
-    // 状态机：三段式
-    // ----------------------------------------------------------------------------
-    // 1) 状态寄存
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
-            state <= STATE_IDLE;
-        else
-            state <= next_state;
+    else begin
+        rd_datav_keep <= rd_datav;
     end
-
-    // 2) 组合逻辑：计算下一状态
-    integer i;
-    // 当所有通道 spi_valid=1，表示当前波位数据已准备就绪
-    wire all_valid = &spi_valid;
-
-    always @(*) begin
-        next_state = state;
-        case (state)
-            // STATE_IDLE：等待下一波位数据到来
-            STATE_IDLE: begin
-                // 如果侦测到所有通道有效，则开始写当前波位
-                if (all_valid) 
-                    next_state = STATE_WRITE;
-                else
-                    next_state = STATE_IDLE;
+end
+//数据寄存，按通道存储
+always @(posedge sys_clk) begin
+    if(sys_rst)begin
+        for(i = 0;i < GROUP_NUM;i = i + 1)begin//i遍历组
+            for(j = 0;j < 4;j = j + 1)begin//j遍历芯片
+                rd_data_keep[i*16+(j*4+0)] <= 0; 
+                rd_data_keep[i*16+(j*4+1)] <= 0; 
+                rd_data_keep[i*16+(j*4+2)] <= 0; 
+                rd_data_keep[i*16+(j*4+3)] <= 0; 
             end
-
-            // STATE_WRITE：单波位内部写操作（LANE_NUM 次）
-            STATE_WRITE: begin
-                if (write_counter == LANE_NUM - 1)
-                    next_state = STATE_DONE;
-                else
-                    next_state = STATE_WRITE;
-            end
-
-            // STATE_DONE：单波位写完后，判断是否继续下一波位或结束
-            STATE_DONE: begin
-                next_state = STATE_IDLE;
-            end
-
-            default: next_state = STATE_IDLE;
-        endcase
-    end
-
-    // 3) 输出逻辑：在每个状态下更新寄存器
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            bram_we         <= 1'b0;
-            bram_addr       <= 32'd0;
-            bram_data       <= 32'd0;
-            done            <= 1'b0;
-
-            beam_pos_num_reg<= 32'd0;
-            wave_count      <= 32'd0;
-            write_counter   <= 0;
-
-            // 初始化缓存
-            for (i = 0; i < CHANNEL_NUM; i=i+1) begin
-                spi_data_buf[i] <= 106'd0;
-            end
-        end else begin
-            // 默认值
-            bram_we <= 1'b0;
-            done    <= 1'b0;
-
-            case (state)
-            //--------------------------------------------------------------------------
-            // 等待新的波位数据
-            //--------------------------------------------------------------------------
-            STATE_IDLE: begin
-                // 如果是新一轮写（wave_count=0），则锁存 beam_pos_num
-                // 表示本轮最多要写多少波位
-                if (wave_count == 0) begin
-                    beam_pos_num_reg <= beam_pos_num;
-                end
-
-                // 检测到所有通道数据有效，则缓存到 spi_data_buf
-                if (all_valid) begin
-                    for (i = 0; i < CHANNEL_NUM; i=i+1) begin
-                        spi_data_buf[i] <= spi_data[i*106 +: 106];
-                    end
-                    write_counter <= 0;
-                end
-            end
-
-            //--------------------------------------------------------------------------
-            // 写当前波位
-            //--------------------------------------------------------------------------
-            STATE_WRITE: begin
-                bram_we   <= 1'b1;
-                // 若要区分不同波位写不同地址段，可加 offset:
-                // bram_addr = wave_count * LANE_NUM + write_counter
-                // 此处简单示例，地址直接从 0 ~ LANE_NUM-1，每波位都写同一段
-                bram_addr <= wave_count * LANE_NUM + write_counter;
-                bram_data <= {6'd0, seg_data};
-
-                if (write_counter < LANE_NUM - 1)
-                    write_counter <= write_counter + 1;
-            end
-
-            //--------------------------------------------------------------------------
-            // 当前波位写完，判断是否继续或结束
-            //--------------------------------------------------------------------------
-            STATE_DONE: begin
-                // 当前波位结束，wave_count+1
-                wave_count <= wave_count + 1;
-
-                // 如果已经写到的波位数 >= beam_pos_num_reg，表示本轮结束
-                if (wave_count + 1 >= beam_pos_num_reg) begin
-                    done            <= 1'b1;         // 拉高done一个周期
-                    wave_count      <= 0;            // 清零波位计数
-                    beam_pos_num_reg<= 0;            // 清零波位上限
-                    bram_addr       <= 0;            // 清零地址
-                    // 如果还需要清缓存可在此处执行
-                end
-            end
-
-            default: ;
-            endcase
         end
     end
+    else begin
+        for(i = 0;i < GROUP_NUM;i = i + 1)begin//i遍历组
+            for(j = 0;j < 4;j = j + 1)begin//j遍历芯片
+                rd_data_keep[i*16+(j*4+0)] <= rd_data[i*4+j][25:0  ]; //i*4+j是芯片索引 i*16+(j*4+0)是通道索引
+                rd_data_keep[i*16+(j*4+1)] <= rd_data[i*4+j][51:26 ]; 
+                rd_data_keep[i*16+(j*4+2)] <= rd_data[i*4+j][77:52 ]; 
+                rd_data_keep[i*16+(j*4+3)] <= rd_data[i*4+j][103:78]; 
+            end
+        end
+    end
+end
+//生成工作标志
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        work_flag <= 0;
+    else if(|rd_datav_keep)
+        work_flag <= 1;
+    else if(end_cnt_lane)
+        work_flag <= 0;
+end
+
+//生成计数器
+assign add_cnt_lane = work_flag;
+assign end_cnt_lane = add_cnt_lane && cnt_lane == LANE_NUM - 1;
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        cnt_lane <= 0;
+    else if(add_cnt_lane)begin
+        if(end_cnt_lane)
+            cnt_lane <= 0;
+        else 
+            cnt_lane <= cnt_lane + 1;
+    end
+end
+//生成bram端口
+assign bram_clk = sys_clk;
+assign bram_we = work_flag;
+assign bram_addr = beam_pos_cnt * LANE_NUM + cnt_lane;
+assign bram_data = rd_data_keep[cnt_lane];
+always @(posedge sys_clk) begin
+    if(sys_rst)
+        bram_wr_done <= 0;
+    else
+        bram_wr_done <= end_cnt_lane;
+end
+
+wire [7:0] scl_temp; 
+wire [7:0] cs_n_temp;
+
+assign scl_temp  = {{4{scl[1]}},{4{scl[0]}}};  // 正确拼接方式
+assign cs_n_temp = {{4{cs_n[1]}},{4{cs_n[0]}}};
+genvar kk;
+generate
+    for(kk = 0; kk < CHIP_NUM;kk = kk + 1)begin:gen_spi_slv
+        spi_slv#(
+            . FRAM_BIT_NUM (FRAM_BIT_NUM)
+        ) uspi_slv(
+        . sys_clk   (sys_clk        )  ,
+        . sys_rst   (sys_rst        )  ,
+        . mosi      (mosi[kk]       )  ,//
+        . scl       (scl_temp[kk]            )  ,
+        . cs_n      (cs_n_temp[kk]           )  ,
+        . rd_data   (rd_data[kk]    )  ,//
+        . rd_datav  (rd_datav[kk]   )   //
+        );
+    end
+endgenerate
+
 
 endmodule

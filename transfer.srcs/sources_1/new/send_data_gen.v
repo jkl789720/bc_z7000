@@ -70,7 +70,6 @@ output reg [23:0]           beam_pos_cnt_temp            //从第一个有效prf
 
 
 //-----------------温度请求处理逻辑-------------------//
-//这样做的好处是有且只响应一次请求逻辑
 reg temper_req_r;
 wire temper_req_pos;
 reg temper_req_keep;
@@ -166,8 +165,8 @@ localparam SEND_DARY                    = 5'd11 ;
 localparam WAIT_LD                      = 5'd12 ;
 localparam SEND_LD                      = 5'd13 ;
 localparam ARBITRATE1                   = 5'd14 ;//判断是单波位还是多波位
-localparam CHANGE_BW                    = 5'd15 ;
-localparam WAIT_SOM_PRF                 = 5'd16 ;
+localparam WAIT_SOM_PRF                 = 5'd15 ;
+localparam CHANGE_BW                    = 5'd16 ;
 localparam READ_TEMPERATURE             = 5'd17 ;
 localparam WHETHER_READ_TEMPERATURE     = 5'd18 ;
 //---------------------状态切换相关变量定义-------------------------------//
@@ -331,7 +330,7 @@ always@(*)begin
         case (c_state)
             `ifdef SAR
                 IDLE:begin
-                    if(v(alid_pos)//由 - 1)于时序对齐的原因用打一拍后的信号
+                    if(valid_pos)//由 - 1)于时序对齐的原因用打一拍后的信号
                         n_state = ARBITRATE0;
                     else
                         n_state = c_state;
@@ -398,12 +397,11 @@ always@(*)begin
             WAIT_DARY :begin
                 if(ld_mode_v == 0)
                     n_state = SEND_DARY;
-                else begin
-                    if(first_beam_pos)
-                        n_state = prf_pos ? SEND_DARY : c_state;
-                    else
-                        n_state = prf_wait_done ? SEND_DARY : c_state;
-                end
+                else if(prf_pos)
+                    n_state = SEND_DARY;
+                else
+                    n_state = c_state;
+                
             end
             SEND_DARY :begin
                 if(cnt_ld == time_1us - 1)
@@ -438,8 +436,10 @@ always@(*)begin
             ARBITRATE1: begin//latch done
                 if(beam_pos_num == 1)
                     n_state = IDLE;
+                else if(beam_pos_num > 1)
+                    n_state = WAIT_SOM_PRF;
                 else
-                    n_state = CHANGE_BW;
+                    n_state = IDLE;
             end
             `ifdef SAR
                 CHANGE_BW : begin
@@ -451,8 +451,8 @@ always@(*)begin
                 end
             `endif
             WAIT_SOM_PRF : begin
-                if(prf_wait_done)
-                    n_state = CMD_GEN;
+                if(cnt_prf == wave_switch_interval - 1)
+                    n_state = CHANGE_BW;
                 else
                     n_state = c_state;
             end
@@ -535,13 +535,8 @@ always@(posedge sys_clk)begin
                 if(now_beam_get_done)
                     flag <= 0;
                 trig <= 0;
-                cnt_prf <= 0;
-            end
-            WAIT_DARY:begin
-                if(prf_pos) cnt_prf <= cnt_prf + 1;
             end
             SEND_DARY :begin
-                cnt_prf <= 0;
                 dary_o <= 1;
                 if(cnt_ld == time_1us - 1)begin
                     cnt_ld               <= 0;
@@ -593,12 +588,12 @@ always@(posedge sys_clk)begin
 
             end
             WAIT_SOM_PRF:begin
-                if(prf_pos)begin
-                    if(prf_wait_done)
-                        cnt_prf <= 0;
-                    else    
-                        cnt_prf <= cnt_prf + 1;
-                end
+                if(prf_pos)
+                    cnt_prf <= cnt_prf + 1;
+                else if(cnt_prf == wave_switch_interval - 1)
+                    cnt_prf <= 0;
+                    
+                
             end
         endcase
     end

@@ -68,6 +68,14 @@ module bc_wrapper#(
     output [31:0]                   ram_bc_init_dout_back ,
     output                          ram_bc_init_rst_back  ,
 
+    input                           clka_check              ,
+    input                           ena_check               ,
+    input [3:0]                     wea_check               ,
+    input [31:0]                    addra_check             ,
+    input [31:0]                    dina_check              ,
+    output[31:0]                    douta_check             ,
+    output                          rama_rst_check          ,
+
 
     input   [31:0] 			        app_param0	    ,
     input   [31:0] 			        app_param1	    ,
@@ -274,6 +282,23 @@ wire                            rst_o_h        ;
 // wire                          BC_RST       ; 
 
 reg [7:0] sd_back_r [1:0];
+reg [1:0] prf_pin_in_r ;
+reg [1:0] prf_rf_in_r  ;
+reg [1:0] tr_en_r      ;
+
+//打拍同步
+always@(posedge sys_clk)begin
+    if(sys_rst)begin
+        prf_pin_in_r <= 0;
+        prf_rf_in_r  <= 0;
+        tr_en_r <= 0;
+    end    
+    else begin
+        prf_pin_in_r <= {prf_pin_in_r[0],prf_pin_in};
+        prf_rf_in_r  <= {prf_rf_in_r[0],prf_rf_in};
+        tr_en_r <= {tr_en_r[0],tr_en};
+    end
+end
 
 //地址分配
 assign bc_top_addr    = (((GROUP_NUM*GROUP_CHIP_NUM) << 4))*BEAM_NUM;
@@ -343,7 +368,7 @@ assign receive_period       = app_param1_r[1][31:16];
 
 assign beam_pos_num	    = app_param2_r[1]   ;
 
-assign prf = prf_mode ? prf_pin_in : prf_rf_in;
+assign prf = prf_mode ? prf_pin_in_r[1] : prf_rf_in_r[1];
 assign reset = sys_rst || image_start || (~init_done);
 
 always@(posedge sys_clk)begin
@@ -444,8 +469,6 @@ temperature #(
     .temper_data3            ( temper_data3        ),
     .temper_data_valid       ( temper_data_valid   ),
     .temper_read_done        ( temper_read_done    ),
-    .ld_o                    ( ld_o                ),
-    .dary_o                  ( dary_o              ),
     .cnt_bit                 ( cnt_bit             )
 );
     
@@ -471,7 +494,7 @@ u_wave_ctrl_sig_gen(
 . ld_o	                (ld_o	            ),
 . single_lane			(single_lane		),
 . tr_mode				(tr_mode			),
-. tr_en				    (tr_en				),
+. tr_en				    (tr_en_r[1]		    ),
 . tr_en_merge	        (tr_en_merge		)
 );
 
@@ -513,40 +536,61 @@ bc_txen_expand u_bc_txen_expand(
 .  cnt_prf          (cnt_prf        )
 );
 
-//上电只复位一次，用sys_rst
-init_fsm#(
-    . SYSHZ                 (SYSHZ          )  ,
-    . SCLHZ                 (SCLHZ          )  ,
-    . INIT_REG_NUM          (16             )  
-)
-u_init_fsm(
-    . sys_clk       (sys_clk            ) ,
-    . sys_rst       (sys_rst            ) ,
-    . chip_reset    (chip_reset         ) ,
+// //上电只复位一次，用sys_rst
+// init_fsm#(
+//     . SYSHZ                 (SYSHZ          )  ,
+//     . SCLHZ                 (SCLHZ          )  ,
+//     . INIT_REG_NUM          (16             )  
+// )
+// u_init_fsm(
+//     . sys_clk       (sys_clk            ) ,
+//     . sys_rst       (sys_rst            ) ,
+//     . chip_reset    (chip_reset         ) ,
 
-    . init_start    (init_start         ) ,
-    . init_read_req    (init_read_req         ) ,
-    . ram_bc_init_clk  (ram_bc_init_clk ),
-    . ram_bc_init_en   (ram_bc_init_en  ),
-    . ram_bc_init_we   (ram_bc_init_we  ),
-    . ram_bc_init_addr (ram_bc_init_addr),
-    . ram_bc_init_din  (ram_bc_init_din ),
-    . ram_bc_init_dout (ram_bc_init_dout),
-    . ram_bc_init_rst  (ram_bc_init_rst ),
+//     . init_start    (init_start         ) ,
+//     . init_read_req    (init_read_req         ) ,
+//     . ram_bc_init_clk  (ram_bc_init_clk ),
+//     . ram_bc_init_en   (ram_bc_init_en  ),
+//     . ram_bc_init_we   (ram_bc_init_we  ),
+//     . ram_bc_init_addr (ram_bc_init_addr),
+//     . ram_bc_init_din  (ram_bc_init_din ),
+//     . ram_bc_init_dout (ram_bc_init_dout),
+//     . ram_bc_init_rst  (ram_bc_init_rst ),
 
-    . ram_bc_init_clk_back  (ram_bc_init_clk_back ),
-    . ram_bc_init_en_back   (ram_bc_init_en_back  ),
-    . ram_bc_init_we_back   (ram_bc_init_we_back  ),
-    . ram_bc_init_addr_back (ram_bc_init_addr_back),
-    . ram_bc_init_din_back  (ram_bc_init_din_back ),
-    . ram_bc_init_dout_back (ram_bc_init_dout_back),
-    . ram_bc_init_rst_back  (ram_bc_init_rst_back ),
+//     . ram_bc_init_clk_back  (ram_bc_init_clk_back ),
+//     . ram_bc_init_en_back   (ram_bc_init_en_back  ),
+//     . ram_bc_init_we_back   (ram_bc_init_we_back  ),
+//     . ram_bc_init_addr_back (ram_bc_init_addr_back),
+//     . ram_bc_init_din_back  (ram_bc_init_din_back ),
+//     . ram_bc_init_dout_back (ram_bc_init_dout_back),
+//     . ram_bc_init_rst_back  (ram_bc_init_rst_back ),
     
-    . cs_n          (cs_n_init          ) ,
-    . sclk          (sclk_init          ) ,
-    . miso          (sd_back_r[1]       ) ,
-    . mosi          (mosi_init          ) 
-    // . init_done     (init_done          )//注debug：禁用初始化
+//     . cs_n          (cs_n_init          ) ,
+//     . sclk          (sclk_init          ) ,
+//     . miso          (sd_back_r[1]       ) ,
+//     . mosi          (mosi_init          ) 
+//     // . init_done     (init_done          )//注debug：禁用初始化
+// );
+
+//-------------------------校验----------------------//
+check_wrapper#(
+    . GROUP_NUM       (2)//注意：个组是物理结构上的组数，跟顶层模块参数不同
+) u_check_wrapper(
+    .  sys_clk       (sys_clk                       )   ,
+    .  sys_rst       (sys_rst                       )   ,
+    .  beam_pos_cnt  (0                  )   ,
+    .  mosi          ({BC2_DATA[7:0]}           )   ,
+    .  scl           ({BC2_CLK[1:0]}             )   ,
+    .  cs_n          ({BC2_SEL[1:0]}             )   ,
+    // .  mosi          ({BC2_DATA,BC1_DATA}           )   ,
+    // .  scl           ({BC2_CLK,BC1_CLK}             )   ,
+    // .  cs_n          ({BC1_SEL,BC1_SEL}             )   ,
+    .  clka          (clka_check                    )   ,
+    .  ena           (ena_check                     )   ,
+    .  wea           (wea_check                     )   ,
+    .  addra         (addra_check                   )   ,
+    .  dina          (dina_check                    )   ,
+    .  douta         (douta_check                   )   
 );
 
 //单通道处理
@@ -658,22 +702,11 @@ assign BC2_G4_TRR = BC2_TRR[3];
         .probe15    (BC2_G4_TRT), // 1
         .probe16    (prf        ), // 1
         .probe17    (tr_en_merge), // 1
-        .probe18    (bc_mode    ), // 3
+        .probe18    (bc_mode    ), // 4
         .probe19    (image_start), // 1
         .probe20    (sys_rst    ),  // 1
         .probe21    (cnt_prf    )  // 1
     );
-//rfsoc
-    // ila_trt u_ila_trt (
-    //     .clk(sys_clk), // input wire clk
-    //     .probe0     (trt_o_h    ), // 4
-    //     .probe1     (trr_o_h    ), // 4
-    //     .probe2     (prf        ), // 1
-    //     .probe3     (tr_en_merge), // 1
-    //     .probe4     (bc_mode    ), // 3
-    //     .probe5     (image_start), // 1
-    //     .probe6     (sys_rst    )  // 1
-    // );
     wire [31:0] sd;
     assign sd = sd_o;
     ila_spi_bc_code u_ila_spi_bc_code (

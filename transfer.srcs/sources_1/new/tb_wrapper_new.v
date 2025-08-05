@@ -26,7 +26,7 @@ module tb_wrapper_new#(
 ();
 
 localparam LANE_NUM = 64*2;
-localparam BEAM_POS_NUM =  10;
+localparam BEAM_POS_NUM =  32;
 localparam WRITE_TIMES = 1;
 localparam TOTAL_LANE_NUM = LANE_NUM * BEAM_POS_NUM;
 localparam INIT_REG_NUM = 128;//多写一个方便回读
@@ -93,6 +93,14 @@ wire            init_start;
 wire            init_done;
 assign ram_bc_init_clk = sys_clk;
 assign ram_bc_init_en  = 1'b1;
+
+wire          clka_check    ;
+wire          ena_check     ;
+wire [3:0]    wea_check     ;
+wire [31:0]   addra_check   ;
+wire [31:0]   dina_check    ;
+wire [31:0]   douta_check   ;
+wire          rama_rst_check;
 
 
 //----------------初始化ram生成------------------//
@@ -182,7 +190,7 @@ assign  rama_addr = cnt_lane_total * 4;//总的当前写入通道数
 assign bc_mode = 0;
 assign send_permission = 2'b11;
 assign receive_permission = 2'b11;
-assign wave_switch_interval = 1;
+assign wave_switch_interval = 4;
 assign receive_peropd = 5000;
 assign init_read_req = 1;
 
@@ -356,8 +364,8 @@ always @(*) begin
 end
 
 //-------------------生成prf信号----------------------//
-localparam PRF_FREQ_HZ = 11200;
-localparam CNT_NUM = 11200;
+localparam PRF_FREQ_HZ = 110200;
+localparam CNT_NUM = 110200;
 reg [$clog2(CNT_NUM)-1:0] cnt;
 always@(posedge sys_clk)begin
 	if(sys_rst)	
@@ -443,6 +451,14 @@ u_bc_wrapper(
     . ram_bc_init_din_back   (ram_bc_init_din_back )       ,
     . ram_bc_init_dout_back  (ram_bc_init_dout_back)       ,
     . ram_bc_init_rst_back   (ram_bc_init_rst_back )       ,
+
+    . clka_check                (clka_check         )       ,
+    . ena_check                 (ena_check          )       ,
+    . wea_check                 (wea_check          )       ,
+    . addra_check               (addra_check        )       ,
+    . dina_check                (dina_check         )       ,
+    . douta_check               (douta_check        )       ,
+    . rama_rst_check            (rama_rst_check     )       ,
     
     . app_param0        (app_param0         )  	    ,
     . app_param1        (app_param1         )  	    ,
@@ -464,67 +480,7 @@ u_bc_wrapper(
     . BC_RST            (BC_RST             )       , 
     . init_done         (init_done          )        
 );
-// //-------------------------校验----------------------//
-// //---------------------娉㈡帶鐮佹楠?------------------------//
-// wire             clka_check ;
-// wire             ena_check  ;
-// wire [3:0]       wea_check  ;
-// wire [31:0]      addra_check;
-// wire [31:0]      dina_check ;
-// wire [31:0]      douta_check;
 
-// wire [31:0]      spi_clk;
-// wire [31:0]      spi_cs_n;
-// wire [31:0]      spi_mosi;
-
-// assign beam_pos_num = BEAM_POS_NUM;
-// assign spi_clk = signal_expansion(BC2_CLK,BC1_CLK);
-// assign spi_cs_n = signal_expansion(BC2_SEL,BC1_SEL);
-// assign spi_mosi = {BC2_DATA,BC1_DATA};
-// check_wrapper #(
-//     .CHANNEL_NUM  (32 ),
-//     .BIT_NUM      (106)
-// )
-//  u_check_wrapper (
-//     .clk                     ( sys_clk            ),
-//     .rst_n                   ( ~(sys_rst | soft_rst)           ),
-//     .spi_clk                 ( spi_clk            ),
-//     .spi_cs_n                ( spi_cs_n           ),
-//     .spi_mosi                ( spi_mosi           ),
-//     .beam_pos_num            ( beam_pos_num       ),
-//     .clka                    ( clka_check         ),
-//     .ena                     ( ena_check          ),
-//     .wea                     ( wea_check[0]       ),
-//     .addra                   ( addra_check[31:2]  ),
-//     .dina                    ( dina_check         ),
-//     .douta                   ( douta_check        )
-// );
-
-// ila_check_back_ram_r u_u_ila_check_back_ram_r (
-// 	.clk(clka_check), // input wire clk
-
-
-// 	.probe0(ena_check), // input wire [0:0]  probe0  
-// 	.probe1(wea_check), // input wire [0:0]  probe1 
-// 	.probe2(addra_check), // input wire [3:0]  probe2 
-// 	.probe3(dina_check), // input wire [31:0]  probe3 
-// 	.probe4(douta_check) // input wire [31:0]  probe4 
-// );
-
-
-
-
-
-// function [31:0] signal_expansion;
-//     input [3:0] sig1;//绗竴涓疄鍙?
-//     input [3:0] sig0;//绗簩涓疄鍙?
-//     begin
-//         signal_expansion = {
-//                         {4{sig1[3]}},{4{sig1[2]}},{4{sig1[1]}},{4{sig1[0]}},
-//                         {4{sig0[3]}},{4{sig0[2]}},{4{sig0[1]}},{4{sig0[0]}}
-//         };
-//     end
-// endfunction
 
 
 endmodule

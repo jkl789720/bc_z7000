@@ -169,6 +169,7 @@ wire [3:0]       wea_check  ;
 wire [31:0]      addra_check;
 wire [31:0]      dina_check ;
 wire [31:0]      douta_check;
+wire [31:0]      rama_rst_check;
 
 wire [31:0]      spi_clk;
 wire [31:0]      spi_cs_n;
@@ -217,7 +218,7 @@ cpu_sys_wrapper u_cpu_sys_wrapper(
     . ram_bc_code_read_addr     (addra_check          ),
     . ram_bc_code_read_din      (dina_check           ),
     . ram_bc_code_read_dout     (douta_check          ),
-    . ram_bc_code_read_rst      (                     ),
+    . ram_bc_code_read_rst      (rama_rst_check       ),
 
     . ram_bc_init_clk           (ram_bc_init_clk      ),
     . ram_bc_init_en            (ram_bc_init_en       ),
@@ -299,6 +300,14 @@ u_bc_wrapper                     (
     . ram_bc_init_din_back          (ram_bc_init_din_back )         ,
     . ram_bc_init_dout_back         (ram_bc_init_dout_back)         ,
     . ram_bc_init_rst_back          (ram_bc_init_rst_back )         ,
+
+    . clka_check                    (clka_check           )         ,
+    . ena_check                     (ena_check            )         ,
+    . wea_check                     (wea_check            )         ,
+    . addra_check                   (addra_check          )         ,
+    . dina_check                    (dina_check           )         ,
+    . douta_check                   (douta_check          )         ,
+    . rama_rst_check                   (rama_rst_check          )         ,
     
     . app_param0                    (app_param0           )  	    ,
     . app_param1                    (app_param1           )  	    ,
@@ -352,6 +361,7 @@ bram_spi_in u_bram_spi_in (
   .dinb (ram_rfsoc_din          ),      // input wire [15 : 0] dinb
   .doutb(doutb                  )       // output wire [15 : 0] doutb
 );
+
 
 assign rst_sof = app_param1[7];
 reg [1:0] rst_sof_r;
