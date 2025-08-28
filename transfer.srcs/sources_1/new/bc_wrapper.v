@@ -102,14 +102,14 @@ module bc_wrapper#(
 
 //BC_RST
     output                          BC_RST       ,
-// output                            sel_o_h        ,
-// output                            scl_o_h    	 , 
-// output [GROUP_CHIP_NUM-1:0]       sd_o_h         ,
-// output                            ld_o_h         ,
-// output                            dary_o_h       ,
-// output [3:0]                      trt_o_h        ,
-// output [3:0]                      trr_o_h        ,
-// output                            rst_o_h        ,
+output                            sel_o_h        ,
+output                            scl_o_h    	 , 
+output [GROUP_CHIP_NUM-1:0]       sd_o_h         ,
+output                            ld_o_h         ,
+output                            dary_o_h       ,
+output [3:0]                      trt_o_h        ,
+output [3:0]                      trr_o_h        ,
+output                            rst_o_h        ,
 output                              init_done            
 
 );
@@ -244,17 +244,17 @@ wire                            ld_o_b         ;
 wire                            tr_o_b         ;
 wire                            rst_o_b        ;
 //--------------------mini_sar--------------------//
-wire                            sel_o_h        ;
-wire                            scl_o_h    	   ;
-wire [GROUP_CHIP_NUM-1:0]       sd_o_h         ;
-wire                            ld_o_h         ;
-wire                            dary_o_h       ;
-wire [3:0]                      trt_o_h        ;
-wire [3:0]                      trr_o_h        ;
-wire                            rst_o_h        ;
-// //7000和rfsoc不同
-// //------------mimo / junke / ku total polarization--------------------//
-// //tr_en_sel_ram
+// wire                            sel_o_h        ;
+// wire                            scl_o_h    	   ;
+// wire [GROUP_CHIP_NUM-1:0]       sd_o_h         ;
+// wire                            ld_o_h         ;
+// wire                            dary_o_h       ;
+// wire [3:0]                      trt_o_h        ;
+// wire [3:0]                      trr_o_h        ;
+// wire                            rst_o_h        ;
+//7000和rfsoc不同
+//------------mimo / junke / ku total polarization--------------------//
+//tr_en_sel_ram
 // wire                          bram_tx_sel_clk ;
 // wire                          bram_tx_sel_en  ;
 // wire [3:0]                    bram_tx_sel_we  ;
@@ -536,41 +536,41 @@ bc_txen_expand u_bc_txen_expand(
 .  cnt_prf          (cnt_prf        )
 );
 
-// //上电只复位一次，用sys_rst
-// init_fsm#(
-//     . SYSHZ                 (SYSHZ          )  ,
-//     . SCLHZ                 (SCLHZ          )  ,
-//     . INIT_REG_NUM          (16             )  
-// )
-// u_init_fsm(
-//     . sys_clk       (sys_clk            ) ,
-//     . sys_rst       (sys_rst            ) ,
-//     . chip_reset    (chip_reset         ) ,
+//上电只复位一次，用sys_rst
+init_fsm#(
+    . SYSHZ                 (SYSHZ          )  ,
+    . SCLHZ                 (SCLHZ          )  ,
+    . INIT_REG_NUM          (16             )  
+)
+u_init_fsm(
+    . sys_clk       (sys_clk            ) ,
+    . sys_rst       (sys_rst            ) ,
+    . chip_reset    (chip_reset         ) ,
 
-//     . init_start    (init_start         ) ,
-//     . init_read_req    (init_read_req         ) ,
-//     . ram_bc_init_clk  (ram_bc_init_clk ),
-//     . ram_bc_init_en   (ram_bc_init_en  ),
-//     . ram_bc_init_we   (ram_bc_init_we  ),
-//     . ram_bc_init_addr (ram_bc_init_addr),
-//     . ram_bc_init_din  (ram_bc_init_din ),
-//     . ram_bc_init_dout (ram_bc_init_dout),
-//     . ram_bc_init_rst  (ram_bc_init_rst ),
+    . init_start    (init_start         ) ,
+    . init_read_req    (init_read_req         ) ,
+    . ram_bc_init_clk  (ram_bc_init_clk ),
+    . ram_bc_init_en   (ram_bc_init_en  ),
+    . ram_bc_init_we   (ram_bc_init_we  ),
+    . ram_bc_init_addr (ram_bc_init_addr),
+    . ram_bc_init_din  (ram_bc_init_din ),
+    . ram_bc_init_dout (ram_bc_init_dout),
+    . ram_bc_init_rst  (ram_bc_init_rst ),
 
-//     . ram_bc_init_clk_back  (ram_bc_init_clk_back ),
-//     . ram_bc_init_en_back   (ram_bc_init_en_back  ),
-//     . ram_bc_init_we_back   (ram_bc_init_we_back  ),
-//     . ram_bc_init_addr_back (ram_bc_init_addr_back),
-//     . ram_bc_init_din_back  (ram_bc_init_din_back ),
-//     . ram_bc_init_dout_back (ram_bc_init_dout_back),
-//     . ram_bc_init_rst_back  (ram_bc_init_rst_back ),
+    . ram_bc_init_clk_back  (ram_bc_init_clk_back ),
+    . ram_bc_init_en_back   (ram_bc_init_en_back  ),
+    . ram_bc_init_we_back   (ram_bc_init_we_back  ),
+    . ram_bc_init_addr_back (ram_bc_init_addr_back),
+    . ram_bc_init_din_back  (ram_bc_init_din_back ),
+    . ram_bc_init_dout_back (ram_bc_init_dout_back),
+    . ram_bc_init_rst_back  (ram_bc_init_rst_back ),
     
-//     . cs_n          (cs_n_init          ) ,
-//     . sclk          (sclk_init          ) ,
-//     . miso          (sd_back_r[1]       ) ,
-//     . mosi          (mosi_init          ) 
-//     // . init_done     (init_done          )//注debug：禁用初始化
-// );
+    . cs_n          (cs_n_init          ) ,
+    . sclk          (sclk_init          ) ,
+    . miso          (sd_back_r[1]       ) ,
+    . mosi          (mosi_init          ) 
+    // . init_done     (init_done          )//注debug：禁用初始化
+);
 
 //-------------------------校验----------------------//
 check_wrapper#(

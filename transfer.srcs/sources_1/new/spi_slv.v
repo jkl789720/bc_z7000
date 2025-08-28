@@ -26,7 +26,7 @@ reg [$clog2(FRAM_BIT_NUM)-1:0]   cnt_bit;//6
 wire        add_cnt_bit,end_cnt_bit;
 
 
-assign scl_pos = ~scl_r[5] && scl_r[4] && scl_r[3] && scl_r[2] && scl_r[1] && scl_r[0];
+assign scl_pos = ~scl_r[5] && scl_r[4] ;
 
 
 //-------------------异步信号同步-----------------------//

@@ -22,7 +22,7 @@ output [31:0]                       ram_rfsoc_din
 
 );
 
-localparam RAM_DONE_ADDR = 32'd8186;//ctrl_reg2的地址，按32bit编码，而非字节编码 需跟随协议改
+localparam RAM_DONE_ADDR = 32'd8191;//ctrl_reg15的地址，按32bit编码，而非字节编码 需跟随协议改
 
 reg [1:0]  bc_data_done_r  ;
 wire bc_data_done_pos;

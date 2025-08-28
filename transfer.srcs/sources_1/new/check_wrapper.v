@@ -94,7 +94,7 @@ ila_check_back_ram_w u_u_ila_check_back_ram_w (
 	.probe1(bram_addr   ),//10
 	.probe2(bram_data   ),//32
 	.probe3(bram_wr_done        ), //1
-	.probe4(cnt_frame        ) //64 
+	.probe4(beam_pos_cnt        ) //64 
 );
 
 

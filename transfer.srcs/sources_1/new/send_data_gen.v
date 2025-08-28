@@ -330,7 +330,7 @@ always@(*)begin
         case (c_state)
             `ifdef SAR
                 IDLE:begin
-                    if(valid_pos)//由 - 1)于时序对齐的原因用打一拍后的信号
+                    if(valid_pos)//由于时序对齐的原因用打一拍后的信号
                         n_state = ARBITRATE0;
                     else
                         n_state = c_state;

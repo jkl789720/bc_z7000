@@ -94,14 +94,16 @@ always @(posedge sys_clk) begin
         bram_wr_done <= end_cnt_lane;
 end
 
-wire [7:0] scl_temp; 
-wire [7:0] cs_n_temp;
+wire [CHIP_NUM-1:0] scl_temp; 
+wire [CHIP_NUM -1:0] cs_n_temp;
 
-assign scl_temp  = {{4{scl[1]}},{4{scl[0]}}};  // 正确拼接方式
-assign cs_n_temp = {{4{cs_n[1]}},{4{cs_n[0]}}};
+
 genvar kk;
 generate
+
     for(kk = 0; kk < CHIP_NUM;kk = kk + 1)begin:gen_spi_slv
+        assign scl_temp[kk]  = scl[kk >> 2];  // 正确拼接方式
+        assign cs_n_temp[kk] = cs_n[kk >> 2];
         spi_slv#(
             . FRAM_BIT_NUM (FRAM_BIT_NUM)
         ) uspi_slv(

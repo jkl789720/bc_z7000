@@ -32,25 +32,21 @@ wire trr_o;
 
 wire                bram_tx_sel_en_read   ;   
 wire [31 : 0]        bram_tx_sel_addr_read ;  
-wire [31 : 0]       bram_tx_sel_dout_read ;  
+wire [31 : 0]       bram_tx_sel_dout_read ;  //地16位给第一个prf，高16位给第二个prf(第一个prf为1，第二个prf为0)
 
 reg prf_r;
 wire prf_pos;
-reg [23:0] cnt_prf;//对prf进行计数，计数到beam_pos_cnt时，cnt_prf复位
+reg cnt_prf;//对prf进行计数，计数到beam_pos_cnt时，cnt_prf复位
 always@(posedge sys_clk) prf_r <= prf;
 assign prf_pos = prf && !prf_r;
 always@(posedge sys_clk)begin
     if(sys_rst)
         cnt_prf <= 0;
-    else if(prf_pos)begin
-        if(cnt_prf >= beam_pos_num)
-            cnt_prf <= 1;
-        else
-            cnt_prf <= cnt_prf + 1;
-    end
+    else if(prf_pos)
+        cnt_prf <= cnt_prf + 1;
 end
 
-assign tx_sel = bram_tx_sel_dout_read[15:0];
+assign tx_sel = cnt_prf == 1 ? bram_tx_sel_dout_read[15:0] : bram_tx_sel_dout_read[31:16];
 
 
 //ram_read_port
@@ -102,7 +98,7 @@ ila_trt_ps u_ila_trt_ps (
 	.clk(sys_clk                 ), 
 	.probe0(tr_en                ), //1
 	.probe1(prf                  ), //1
-	.probe2(beam_pos_cnt_temp -1      ), //24
+	.probe2(cnt_prf              ), //1
 	.probe3(bram_tx_sel_addr_read), //32
 	.probe4(bram_tx_sel_dout_read), //32
 	.probe5(trt_ps               ), //8

@@ -142,10 +142,7 @@ always @(posedge sys_clk) begin
     end
 end
 
-assign bram_tx_sel_din = 32'h00003cc3;
-
-
-
+assign bram_tx_sel_din = 32'b00001010_11111111__00000101_11111111;
 
 wire [7:0] sd_back;
 reg  [31 : 0]               wr_cnt_lane , wr_cnt_beam           ;//通道计数，波位计数
