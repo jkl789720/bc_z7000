@@ -17,15 +17,15 @@ module init_fsm#(
     input [31:0]                ram_bc_init_addr       ,
     input [31:0]                ram_bc_init_din        ,
     output[31:0]                ram_bc_init_dout       ,
-    output                      ram_bc_init_rst        ,
+    input                       ram_bc_init_rst        ,
 
-    input                       ram_bc_init_clk_back        ,//加入顶层
-    input                       ram_bc_init_en_back         ,
-    input [3:0]                 ram_bc_init_we_back         ,
-    input [31:0]                ram_bc_init_addr_back       ,
-    input [31:0]                ram_bc_init_din_back        ,
-    output[31:0]                ram_bc_init_dout_back       ,
-    output                      ram_bc_init_rst_back        ,
+    input                       ram_bc_init_back_clk        ,//加入顶层
+    input                       ram_bc_init_back_en         ,
+    input [3:0]                 ram_bc_init_back_we         ,
+    input [31:0]                ram_bc_init_back_addr       ,
+    input [31:0]                ram_bc_init_back_din        ,
+    output[31:0]                ram_bc_init_back_dout       ,
+    input                       ram_bc_init_back_rst        ,
 
     output reg [7:0]            chip_reset          ,
     output reg [7:0]            cs_n                ,
@@ -170,8 +170,8 @@ assign Read_Done = wr_done_init && cnt_init == (INIT_REG_NUM + 1) * GROUP_NUM - 
 assign Spi2bc_Done = wr_done_mode;
 assign Delay_Done = cnt_delay == DELAY_VALUE - 1;
 always@(posedge sys_clk) init_start_r <= {init_start_r[1:0],init_start};
-// assign init_start_pos = ~init_start_r[2] && init_start_r[1];//注debug
-assign init_start_pos = 1;//注debug
+assign init_start_pos = ~init_start_r[2] && init_start_r[1];//注debug
+// assign init_start_pos = 1;//注debug
 
 always @(posedge sys_clk) begin
     if(sys_rst) begin
@@ -565,14 +565,13 @@ init_bram u_init_bram (
   .dinb  (0                     ),
   .doutb (usr_init_ram_data         ) 
 );
-
 ram_init_back u_ram_init_back (
-  .clka (ram_bc_init_clk_back      ),    // input wire clka
-  .ena  (ram_bc_init_en_back       ),      // input wire ena
-  .wea  (ram_bc_init_we_back[0]    ),      // input wire [0 : 0] wea
-  .addra(ram_bc_init_addr_back >> 2),  // input wire [5 : 0] addra
-  .dina (ram_bc_init_din_back      ),    // input wire [31 : 0] dina
-  .douta(ram_bc_init_dout_back     ),  // output wire [31 : 0] douta
+  .clka (ram_bc_init_back_clk      ),    // input wire clka
+  .ena  (ram_bc_init_back_en       ),      // input wire ena
+  .wea  (ram_bc_init_back_we[0]    ),      // input wire [0 : 0] wea
+  .addra(ram_bc_init_back_addr >> 2),  // input wire [5 : 0] addra
+  .dina (ram_bc_init_back_din      ),    // input wire [31 : 0] dina
+  .douta(ram_bc_init_back_dout     ),  // output wire [31 : 0] douta
   .clkb (sys_clk                ),    // input wire clkb
   .enb  (usr_init_en_back       ),      // input wire enb
   .web  (usr_init_we_back       ),      // input wire [0 : 0] web
@@ -612,14 +611,13 @@ ila_init_ram u_ila_init_ram (
 );
 
 ila_init_ram u_ila_init_ram_bak (
-    .clk	        (ram_bc_init_clk_back  	 ),//
-    .probe0	        (ram_bc_init_en_back     ),//1  
-    .probe1	        (ram_bc_init_we_back     ),//4  
-    .probe2         (ram_bc_init_addr_back   ),//32  
-    .probe3         (ram_bc_init_din_back    ),//32   
-    .probe4         (ram_bc_init_dout_back   ) //32   
+    .clk	        (ram_bc_init_back_clk ),//
+    .probe0	        (ram_bc_init_back_en  ),//1  
+    .probe1	        (ram_bc_init_back_we  ),//4  
+    .probe2         (ram_bc_init_back_addr),//32  
+    .probe3         (ram_bc_init_back_din ),//32   
+    .probe4         (ram_bc_init_back_dout) //32   
 );
-
 
 `endif
 

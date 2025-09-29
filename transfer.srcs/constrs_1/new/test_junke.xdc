@@ -100,7 +100,9 @@ set_property PACKAGE_PIN H17  [get_ports {mosi  }       ]
 
 set_property PACKAGE_PIN G15  [get_ports {prf_rf_in }   ]
 set_property PACKAGE_PIN H15  [get_ports {tr_en     }   ]
-set_property PACKAGE_PIN K18  [get_ports {bc_data_done} ]
+# set_property PACKAGE_PIN K18  [get_ports {bc_data_done} ]
+
+set_property PACKAGE_PIN K18  [get_ports {tr_force_rx} ]
 
 
 ##--------------------IOSTANDARD-------------------//
@@ -118,6 +120,8 @@ set_property IOSTANDARD LVCMOS33 [get_ports {mosi }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {prf_rf_in }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {tr_en     }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {bc_data_done}   ]
+
+set_property IOSTANDARD LVCMOS33 [get_ports {tr_force_rx}   ]
 
 ##sd_back
 set_property PACKAGE_PIN U19        [get_ports {sd_back[0]  }   ]

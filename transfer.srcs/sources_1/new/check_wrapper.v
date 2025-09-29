@@ -11,7 +11,7 @@ module check_wrapper#(
     input   [23 : 0]                beam_pos_cnt ,
     input               clka        ,
     input               ena         ,
-    input               wea         ,
+    input   [3:0]       wea         ,
     input   [31 : 0]    addra       ,
     input   [31 : 0]    dina        ,
     output  [31 : 0]    douta       ,
@@ -20,7 +20,7 @@ module check_wrapper#(
 
 wire          bram_clk      ;
 wire          bram_we       ;
-wire [10:0]   bram_addr     ;
+wire [31:0]   bram_addr     ;
 wire [31:0]   bram_data     ;
 
 reg [GROUP_NUM*4-1:0] mosi_r [1:0];
@@ -51,7 +51,7 @@ end
 bram_bc_code_spi u_bram_bc_code_spi (
   .clka (clka             ),// input  wire clka
   .ena  (ena              ),// input  wire ena
-  .wea  (wea              ),// input  wire [0 : 0] wea
+  .wea  (wea[0]           ),// input  wire [0 : 0] wea
   .addra(addra >> 2       ),// input  wire [10 : 0] addra
   .dina (dina             ),// input  wire [31 : 0] dina
   .douta(douta            ),// output wire [31 : 0] douta

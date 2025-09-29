@@ -633,6 +633,16 @@ bram_delay u_bram_delay (
   .rstb         (0                  )
 );
 
+ila_send_data_gen ila_send_data_gen_E0 (
+    .clk(sys_clk), // input wire clk
+    .probe0(rd_en), // input wire [4:0]  probe0
+    .probe1(rd_addr), // input wire [4:0]  probe1
+    .probe2(rd_data), // input wire [0:0]  probe2
+    .probe3(c_state), // input wire [0:0]  probe3
+    .probe4(n_state), // input wire [31:0]  probe4
+    .probe5(valid_pos) // input wire [127:0]  probe5
+);
+
 
 //------------------------调试信号
 

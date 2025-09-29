@@ -7,7 +7,7 @@ input           sys_clk         ,
 input           sys_rst         ,
 input           tr_en           ,
 input  [15:0]   receive_period  ,
-output reg      trt_o           ,
+output          trt_o           ,//恢复降功耗功能时需要改为reg型
 output          trr_o           
     );
 
@@ -69,20 +69,24 @@ end
 assign trt_temp = CFGBC_OUTEN_r[DWIDTH/2];
 assign trr_temp = |CFGBC_OUTEN_r;
 
+assign trt_o = trt_temp;//2025/09/09  去掉降功耗功能
+assign trr_o = trr_temp;//2025/09/09  去掉降功耗功能
 
-//关闭tr芯片（使其处于负载态）
-assign prot_pull_up = ~ tr_en_r[7] &&  (tr_en_r[6]);
-always @(posedge sys_clk) begin
-    if(sys_rst)
-        trt_o <= 1;
-    else if(idle_flag | prot_pull_up)
-        trt_o <= 1;
-    else if(trt_temp_neg)
-        trt_o <= 0;
-    else 
-        trt_o <= trt_o;
-end
-assign trr_o = sys_rst ? 0 : trr_temp | trr_temp_r[3];
+
+//2025/09/09  去掉降功耗功能
+// //关闭tr芯片（使其处于负载态）
+// assign prot_pull_up = ~ tr_en_r[7] &&  (tr_en_r[6]);
+// always @(posedge sys_clk) begin
+//     if(sys_rst)
+//         trt_o <= 1;
+//     else if(idle_flag | prot_pull_up)
+//         trt_o <= 1;
+//     else if(trt_temp_neg)
+//         trt_o <= 0;
+//     else 
+//         trt_o <= trt_o;
+// end
+// assign trr_o = sys_rst ? 0 : trr_temp | trr_temp_r[3];
 
 //生成trt_temp_neg
 always@(posedge sys_clk)trt_temp_r <= trt_temp;
