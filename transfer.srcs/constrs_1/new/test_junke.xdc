@@ -114,7 +114,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports {prf_pin_in}]
 set_property IOSTANDARD LVCMOS33 [get_ports BC*]
 
 ##RFSOC
-set_property IOSTANDARD LVCMOS33 [get_ports {scl  }   ]
+set_property IOSTANDARD LVCMOS33  [get_ports {scl   }       ]
 set_property IOSTANDARD LVCMOS33 [get_ports {cs_n }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {mosi }   ]
 set_property IOSTANDARD LVCMOS33 [get_ports {prf_rf_in }   ]
@@ -140,6 +140,13 @@ set_property PACKAGE_PIN D20        [get_ports {sd_back[6]  }   ]
 set_property IOSTANDARD LVCMOS33    [get_ports {sd_back[6]  }   ]
 set_property PACKAGE_PIN U5         [get_ports {sd_back[7]  }   ]
 set_property IOSTANDARD LVCMOS33    [get_ports {sd_back[7]  }   ]
+
+
+set_property PACKAGE_PIN M19        [get_ports {frame_valid_s}   ]
+set_property IOSTANDARD LVCMOS33 [get_ports {frame_valid_s  }   ]
+
+set_property PACKAGE_PIN M18        [get_ports {bc_code_valid}   ]
+set_property IOSTANDARD LVCMOS33 [get_ports {bc_code_valid  }   ]
 
 
 set_property C_CLK_INPUT_FREQ_HZ 300000000 [get_debug_cores dbg_hub]

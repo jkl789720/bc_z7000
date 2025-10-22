@@ -2,3 +2,6 @@
 !transfer.srcs/**
 !transfer.srcs
 !transfer.xpr
+!.gitignore
+!cpu.tcl
+transfer.srcs/sources_1/bd/**
