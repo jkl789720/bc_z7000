@@ -279,7 +279,8 @@ ila_rfsoc2z7 u_ila_rfsoc2z7 (
 	.probe6 (ram_rfsoc_wren     ), // 1 
 	.probe7 (ram_rfsoc_addr     ), // 32  
 	.probe8 (ram_rfsoc_din      ),  // 32  
-	.probe9 (frame_valid_s      )  // 1  
+	.probe9 (frame_valid_s      ),  // 1  
+	.probe10 (tr_force_rx      )  // 1  
 );
 
 ila_ps_angle_bram_rw u_ila_ps_angle_bram_rw (

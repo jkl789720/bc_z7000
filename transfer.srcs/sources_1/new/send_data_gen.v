@@ -633,6 +633,23 @@ bram_delay u_bram_delay (
   .rstb         (0                  )
 );
 
+reg [31:0] cnt_prf_0;
+always@(posedge sys_clk)begin
+    if(sys_rst)
+        cnt_prf_0 <= 0;
+    else if(prf_pos)
+        cnt_prf_0 <= 0;
+    else 
+        cnt_prf_0 <= cnt_prf_0 + 1;
+ end
+reg [7:0] cnt_prf_pos;
+always@(posedge sys_clk)begin
+    if(sys_rst)
+        cnt_prf_pos <= 0;
+    else if(prf_pos)
+        cnt_prf_pos <= cnt_prf_pos + 1;
+ end
+
 ila_send_data_gen ila_send_data_gen_E0 (
     .clk(sys_clk), // input wire clk
     .probe0(rd_en), // input wire [4:0]  probe0
@@ -640,8 +657,14 @@ ila_send_data_gen ila_send_data_gen_E0 (
     .probe2(rd_data), // input wire [0:0]  probe2
     .probe3(c_state), // input wire [0:0]  probe3
     .probe4(n_state), // input wire [31:0]  probe4
-    .probe5(valid_pos) // input wire [127:0]  probe5
+    .probe5(valid_pos), // input wire [127:0]  probe5
+    .probe6(prf), // input wire [127:0]  probe5
+    .probe7(sys_rst), // input wire [127:0]  probe5
+    .probe8(cnt_prf_0), // input wire [127:0]  probe5
+    .probe9(cnt_prf_pos) // input wire [127:0]  probe5
 );
+
+
 
 
 //------------------------调试信号

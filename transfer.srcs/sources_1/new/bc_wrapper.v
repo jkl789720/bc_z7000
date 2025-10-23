@@ -628,8 +628,8 @@ always@(posedge sys_clk)begin
         single_lane_valid <= 0;
 end
 
-assign trt_pre =  single_lane ? send_flag_in : trt_ps;//注design：边坡为 trt_ps；(junke)(ku_polarization)(小sar) 为 trt_bcmode
-assign trr_pre =  single_lane ? send_flag_in : trr_ps;//注design：边坡为 trr_ps；(junke)(ku_polarization)(小sar) 为 trr_bcmode
+assign trt_pre =  single_lane ? {8{send_flag_in}} : trt_ps;//注design：边坡为 trt_ps；(junke)(ku_polarization)(小sar) 为 trt_bcmode
+assign trr_pre =  single_lane ? {8{send_flag_in}} : trr_ps;//注design：边坡为 trr_ps；(junke)(ku_polarization)(小sar) 为 trr_bcmode
 
 assign trt = tr_force_rx_r[1] ? 0 :  trt_pre;
 assign trr = tr_force_rx_r[1] ? 0 :  trr_pre;
