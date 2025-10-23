@@ -50,7 +50,7 @@ module ctrl#(
 
     input                         prf_rf_in             ,//           
     input                         tr_en                 ,
-    input                         tr_force_rx           ,//
+    // input                         tr_force_rx           ,//测试用需要改回来
 
 //BC1_new
     output  [3:0]                   BC1_SEL             ,   
@@ -83,7 +83,8 @@ module ctrl#(
 wire rst_sof;
 wire reset;
 
-
+wire tr_force_rx;
+assign tr_force_rx = 0;
 assign tr_en_o = tr_en;
 `ifndef TB_TEST
 wire  sys_rst;
