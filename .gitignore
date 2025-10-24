@@ -4,4 +4,5 @@
 !transfer.xpr
 !.gitignore
 !cpu.tcl
+!readme.txt
 transfer.srcs/sources_1/bd/**
