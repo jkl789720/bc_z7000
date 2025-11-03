@@ -128,7 +128,7 @@ assign wave_switch_interval = 4;
 assign receive_peropd = 5000;
 assign init_read_req = 1;
 
-assign app_param3 = 32'hF0FF_0FFF;
+assign app_param3 = 32'hFFFF_FFFF;
 assign app_param2 = BEAM_POS_NUM;
 assign app_param1 = {receive_peropd,1'b0,init_read_req,init_start,receive_permission,send_permission,1'b0,1'b0,1'b1,bc_mode,1'b0,valid_in};
 assign app_param0 = {wave_switch_interval,9'b0,7'b0001111};//外部产生prf、动态配置、发送、内部产生tr
@@ -234,7 +234,7 @@ always@(posedge sys_clk)begin
 end
 
 
-assign tr_force_rx = (cnt > 6500 + 1000 && cnt <= 6500 + 2000);
+assign tr_force_rx = (cnt > 900 + 1000 && cnt <= 900 + 2000);
 
 
 

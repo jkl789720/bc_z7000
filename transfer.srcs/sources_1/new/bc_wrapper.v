@@ -288,13 +288,11 @@ always@(posedge sys_clk)begin
         prf_pin_in_r <= 0;
         prf_rf_in_r  <= 0;
         tr_en_r <= 0;
-        tr_force_rx_r <= 0;
     end    
     else begin
         prf_pin_in_r    <= {prf_pin_in_r[0],prf_pin_in};
         prf_rf_in_r     <= {prf_rf_in_r[0],prf_rf_in};
         tr_en_r         <= {tr_en_r[0],tr_en};
-        tr_force_rx_r   <= {tr_force_rx_r[0],tr_force_rx};
     end
 end
 
@@ -617,6 +615,20 @@ check_wrapper#(
     .  douta         (ram_bc_code_read_dout  )   
 );
 
+//
+wire trt_close_flag_new,trr_close_flag_new;
+localparam DWIDTH = 10;
+reg [DWIDTH:0] CFGBC_OUTEN_r = 0;
+always@(posedge sys_clk)begin
+    if(sys_rst)
+        CFGBC_OUTEN_r <= 0;
+    else
+	    CFGBC_OUTEN_r <= {CFGBC_OUTEN_r[DWIDTH-1:0], tr_force_rx};
+end
+
+assign trr_close_flag_new = CFGBC_OUTEN_r[DWIDTH/2];
+assign trt_close_flag_new = |CFGBC_OUTEN_r;
+
 //单通道处理
 reg single_lane_valid;
 always@(posedge sys_clk)begin
@@ -631,8 +643,8 @@ end
 assign trt_pre =  single_lane ? {8{send_flag_in}} : trt_ps;//注design：边坡为 trt_ps；(junke)(ku_polarization)(小sar) 为 trt_bcmode
 assign trr_pre =  single_lane ? {8{send_flag_in}} : trr_ps;//注design：边坡为 trr_ps；(junke)(ku_polarization)(小sar) 为 trr_bcmode
 
-assign trt = tr_force_rx_r[1] ? 0 :  trt_pre;
-assign trr = tr_force_rx_r[1] ? 0 :  trr_pre;
+assign trt = ~{8{trt_close_flag_new}} & trt_pre;
+assign trr = ~{8{trr_close_flag_new}} & trr_pre;
 
 //------------mimo or junke--------------------//
 assign BC1_SEL  =  init_done ? {4{sel_o}} :  cs_n_init[3:0];
